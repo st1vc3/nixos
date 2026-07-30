@@ -53,10 +53,9 @@
     modesetting.enable = true; # required for Wayland/Hyprland
     nvidiaSettings = true;
     powerManagement.enable = false; # set true if you hit suspend/resume issues
-    # `open = true` needs a Turing (RTX 20xx / GTX 16xx) or newer GPU.
-    # Leaving it false uses the proprietary module, which works everywhere.
-    # Flip to true if your card is Turing+ for the newer open kernel modules.
-    open = false;
+    # RTX 4070 Ti (Ada) on the 595 driver: the open kernel module is the
+    # recommended path for Turing+ cards and avoids black-screen issues.
+    open = true;
     package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
 
@@ -76,6 +75,11 @@
     GBM_BACKEND = "nvidia-drm";
     __GLX_VENDOR_LIBRARY_NAME = "nvidia";
     LIBVA_DRIVER_NAME = "nvidia";
+    # This is a hybrid box (AMD iGPU + NVIDIA dGPU) with the monitor on the
+    # NVIDIA card. Pin Hyprland's compositor backend (aquamarine) to the
+    # NVIDIA GPU by its stable PCI path so it doesn't try to drive the display
+    # through the unused iGPU (which black-screens on login).
+    AQ_DRM_DEVICES = "/dev/dri/by-path/pci-0000:01:00.0-card";
   };
 
   # A portal so screen-sharing / file pickers work under Hyprland.
