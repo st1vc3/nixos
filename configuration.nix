@@ -11,6 +11,9 @@
   # btrfs root; disko provides the filesystems.
   boot.supportedFilesystems = [ "btrfs" ];
 
+  # Weekly TRIM for SSD longevity (preferred over the discard=async mount option).
+  services.fstrim.enable = true;
+
   # ---------------------------------------------------------------------------
   # Networking
   # ---------------------------------------------------------------------------
@@ -136,5 +139,5 @@
   services.openssh.enable = true;
 
   # The release you first installed with. Do NOT change on upgrades.
-  system.stateVersion = "25.05";
+  system.stateVersion = "26.05";
 }

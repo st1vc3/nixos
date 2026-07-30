@@ -2,9 +2,9 @@
   description = "stivce's NixOS configuration";
 
   inputs = {
-    # Using unstable for up-to-date Hyprland/NVIDIA. Pin to a stable branch
-    # (e.g. github:NixOS/nixpkgs/nixos-25.05) if you prefer fewer surprises.
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # Stable branch. Switch to github:NixOS/nixpkgs/nixos-unstable if you want
+    # the newest Hyprland/NVIDIA at the cost of more churn.
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
     disko = {
       url = "github:nix-community/disko";
