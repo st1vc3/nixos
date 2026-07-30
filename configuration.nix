@@ -63,6 +63,10 @@
   # Desktop: Hyprland (Wayland) + SDDM greeter
   # ---------------------------------------------------------------------------
   programs.hyprland.enable = true;
+  # UWSM's systemd user session fails to start here (bindpid unit exit 5),
+  # blocking Hyprland before it launches. Use the plain Hyprland session,
+  # which execs the compositor directly and is simpler to debug.
+  programs.hyprland.withUWSM = false;
 
   services.displayManager.sddm = {
     enable = true;
