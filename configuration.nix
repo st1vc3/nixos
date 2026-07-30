@@ -73,17 +73,14 @@
     wayland.enable = true;
   };
 
-  # Wayland/NVIDIA environment hints for smooth Hyprland behaviour.
+  # Wayland/NVIDIA environment hints.
+  # NOTE: GBM_BACKEND=nvidia-drm and AQ_DRM_DEVICES were REMOVED - on this
+  # hybrid box (AMD iGPU + NVIDIA dGPU) they made aquamarine's CBackend::create()
+  # crash. With modesetting on, aquamarine auto-selects the NVIDIA card (card2 /
+  # renderD129) and drives the 4K display fine on its own. Keep this minimal.
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1"; # Electron/Chromium apps run natively on Wayland
-    GBM_BACKEND = "nvidia-drm";
-    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
-    LIBVA_DRIVER_NAME = "nvidia";
-    # This is a hybrid box (AMD iGPU + NVIDIA dGPU) with the monitor on the
-    # NVIDIA card. Pin Hyprland's compositor backend (aquamarine) to the
-    # NVIDIA GPU by its stable PCI path so it doesn't try to drive the display
-    # through the unused iGPU (which black-screens on login).
-    AQ_DRM_DEVICES = "/dev/dri/by-path/pci-0000:01:00.0-card";
+    LIBVA_DRIVER_NAME = "nvidia"; # hardware video decode via NVIDIA VA-API
   };
 
   # A portal so screen-sharing / file pickers work under Hyprland.
