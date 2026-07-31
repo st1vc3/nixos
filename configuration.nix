@@ -167,6 +167,9 @@
     pavucontrol # PipeWire/PulseAudio volume mixer
   ];
 
+  # Web browser (module form: supports policies + runs native Wayland).
+  programs.firefox.enable = true;
+
   # Screen locker - the module wires up the PAM stack hyprlock needs.
   programs.hyprlock.enable = true;
 
