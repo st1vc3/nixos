@@ -120,7 +120,9 @@ Once the config is solid you can install unattended from your Mac to a booted
 target (any Linux you can SSH into as root, or the NixOS ISO):
 
 ```bash
-nix run github:nix-community/nixos-anywhere -- \
+# On the live ISO, nix-command/flakes aren't enabled by default, so pass the
+# feature flag (or `export NIX_CONFIG="experimental-features = nix-command flakes"`).
+nix --experimental-features "nix-command flakes" run github:nix-community/nixos-anywhere -- \
   --flake .#nixos \
   root@<target-ip>
 ```

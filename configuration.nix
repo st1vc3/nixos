@@ -165,6 +165,11 @@
     # --- GUI apps ---
     nautilus # file manager
     pavucontrol # PipeWire/PulseAudio volume mixer
+
+    # --- referenced by the hypr configs ---
+    psmisc # `killall`, used by start-hyprlock
+    volantes-cursors # XCURSOR_THEME = Volantes_Light
+    kdePackages.qt6ct # QT_QPA_PLATFORMTHEME = qt6ct
   ];
 
   # Web browser (module form: supports policies + runs native Wayland).

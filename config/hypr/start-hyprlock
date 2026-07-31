@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+killall -q hyprlock || true
+
+grim "$HOME/.cache/lockscreen.png" || { notify-send "Failed to capture lockscreen"; exit 1; }
+chmod 600 "$HOME/.cache/lockscreen.png"
+exec hyprlock
