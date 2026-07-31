@@ -10,6 +10,17 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    home-manager = {
+      url = "github:nix-community/home-manager/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Wallpaper repo, tracked declaratively (not a flake, just files).
+    wallpapers = {
+      url = "github:st1vc3/wallpaper";
+      flake = false;
+    };
   };
 
   outputs =
@@ -23,6 +34,7 @@
           ./disko.nix
           ./hardware-configuration.nix
           ./configuration.nix
+          ./home.nix
         ];
       };
     };
