@@ -37,11 +37,13 @@ if [ ! -f "$WALLPAPER" ]; then
   exit 1
 fi
 
-# Start the wallpaper daemon if it isn't already up, then wait for its socket.
-if ! pgrep -x awww-daemon >/dev/null 2>&1; then
+# Start the wallpaper daemon only if it isn't already responding. Using
+# `awww query` (not pgrep) avoids spawning a second daemon that would abort
+# because one is already bound to the socket.
+if ! awww query >/dev/null 2>&1; then
   awww-daemon >/dev/null 2>&1 &
   for _ in $(seq 1 25); do
-    [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY-awww-daemon.sock" ] && break
+    awww query >/dev/null 2>&1 && break
     sleep 0.2
   done
 fi
