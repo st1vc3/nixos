@@ -24,17 +24,23 @@ My NixOS installation, configured declaratively with [flakes](https://nixos.wiki
 | `disko` | Declarative disk partitioning |
 | `home-manager` | `release-26.05` - per-user `$HOME` state |
 | `wallpapers` | [`st1vc3/wallpaper`](https://github.com/st1vc3/wallpaper), pinned (not a flake) |
+| `silentSDDM` | [`uiriansan/SilentSDDM`](https://github.com/uiriansan/SilentSDDM) - SDDM theme |
 
 ## Layout
 
 | Path | Purpose |
 |---|---|
 | `flake.nix` / `flake.lock` | Inputs and the `nixos` system definition (pinned) |
-| `disko.nix` | Declarative disk layout - **set the target `device` before use** |
-| `configuration.nix` | System: boot, NVIDIA, Hyprland/SDDM, audio, packages, users |
+| `configuration.nix` | Thin entry point: boot, network, locale, users + `imports` |
 | `hardware-configuration.nix` | Machine-specific, generated during install |
-| `home.nix` | home-manager wiring (deploys `$HOME` files below) |
-| `config/hypr/` | Hyprland + hyprlock + hypridle configs → `~/.config/hypr/` |
+| `disko.nix` | Declarative disk layout - **set the target `device` before use** |
+| `modules/nvidia.nix` | CPU microcode + NVIDIA graphics + GPU env |
+| `modules/desktop.nix` | Hyprland, SDDM + SilentSDDM theme, portals, lock, fonts |
+| `modules/audio.nix` | PipeWire |
+| `modules/apps.nix` | System packages + Firefox + Starship |
+| `home/default.nix` | home-manager wiring |
+| `home/stivce.nix` | Per-user `$HOME` files (hypr, waybar, scripts, wallpaper) |
+| `config/hypr/`, `config/waybar/` | Configs deployed to `~/.config/` |
 | `scripts/set-wallpaper.sh` | Wallpaper setter (awww) → `~/Scripts/` |
 | `INSTALL.md` | Step-by-step install from the NixOS live ISO |
 
@@ -44,7 +50,8 @@ Hyprland (plain session, not UWSM) with: **waybar** (bar), **wofi** (launcher),
 **swaync** (notifications), **hyprlock**/**hypridle** (lock + idle),
 **hyprpolkitagent** (auth), **awww** (wallpaper), **hyprshot** (screenshots),
 **nautilus**, **firefox**, **kitty**. Config lives in `config/hypr/`; wallpapers
-sync from the `wallpapers` input to `~/Pictures/wallpapers`.
+sync from the `wallpapers` input to `~/Pictures/wallpapers`. Login screen themed
+with **SilentSDDM** (`catppuccin-mocha`).
 
 Set the wallpaper: `~/Scripts/set-wallpaper.sh` (default `red.png`) or `SUPER+F1`.
 
