@@ -12,3 +12,5 @@ setopt CORRECT
 
 # Completion
 autoload -Uz compinit && compinit
+alias rebuild="sudo nixos-rebuild switch --flake ~/nixos#nixos"
+alias ff="clear && fastfetch"
