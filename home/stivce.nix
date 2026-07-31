@@ -15,7 +15,22 @@
     executable = true;
   };
 
+  home.file.".claude/CLAUDE.md".source = ../config/AGENTS.md;
+
   xdg.configFile = {
+    "kitty" = {
+      source = ../config/kitty;
+      recursive = true;
+    };
+    "nvim" = {
+      source = ../config/nvim;
+      recursive = true;
+    };
+    "herdr" = {
+      source = ../config/herdr;
+      recursive = true;
+    };
+
     "zsh/.zshrc".source = ../config/zsh/zshrc;
     "zsh/zshenv".source = ../config/zsh/zshenv;
     "zsh/aliases.zsh".source = ../config/zsh/aliases.zsh;
