@@ -5,10 +5,15 @@
     inputs.claude-code-nix.packages.${pkgs.system}.claude-code
     git
     vim
+    neovim
     wget
     curl
     jq
     fzf
+    fd
+    zoxide
+    eza
+    bat
     fastfetch
     libnotify
     imagemagick
