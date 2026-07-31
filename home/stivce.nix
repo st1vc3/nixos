@@ -6,6 +6,8 @@
   home.stateVersion = "26.05";
   home.file."Pictures/wallpapers".source = inputs.wallpapers;
 
+  home.file.".zshrc".source = ../config/zsh/zshrc;
+
   home.file."Scripts/set-wallpaper.sh" = {
     source = ../scripts/set-wallpaper.sh;
     executable = true;
