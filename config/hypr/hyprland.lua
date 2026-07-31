@@ -86,7 +86,7 @@ hl.env("HYPRCURSOR_SIZE", "34")
 hl.env("GDK_BACKEND", "wayland")
 
 -- NVIDIA
-hl.env("LIBVA_DRIVER_NAME", "nvidia")
+-- LIBVA_DRIVER_NAME is set system-wide in modules/nvidia.nix, not here.
 hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 hl.env("__GL_VRR_ALLOWED", "0")
 hl.env("NVD_BACKEND", "direct")

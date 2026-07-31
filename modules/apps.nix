@@ -19,6 +19,9 @@
     # --- terminal ---
     kitty
 
+    # --- IDE ---
+    zed-editor
+
     # --- Hyprland desktop ---
     waybar # status bar
     wofi # app launcher

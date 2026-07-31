@@ -17,9 +17,20 @@
   # Boot (UEFI / systemd-boot) + storage
   # ---------------------------------------------------------------------------
   boot.loader.systemd-boot.enable = true;
+  # ESP is only 1G (disko.nix) - without a limit, systemd-boot keeps every
+  # generation's kernel+initrd until it fills up and rebuilds start failing.
+  boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "btrfs" ]; # disko provides the filesystems
   services.fstrim.enable = true; # weekly SSD TRIM
+
+  # Keep the Nix store from growing unbounded (works alongside the boot
+  # generation limit above).
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 14d";
+  };
 
   # ---------------------------------------------------------------------------
   # Networking
