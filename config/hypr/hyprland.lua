@@ -77,7 +77,7 @@ end)
 
 -- See https://wiki.hypr.land/Configuring/Advanced-and-Cool/Environment-variables/
 
-hl.env("XCURSOR_THEME", "Volantes_Light")
+hl.env("XCURSOR_THEME", "volantes_light_cursors") -- NixOS theme name (was Volantes_Light)
 hl.env("XCURSOR_SIZE", "34")
 hl.env("HYPRCURSOR_SIZE", "34")
 
