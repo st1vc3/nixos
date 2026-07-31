@@ -151,7 +151,7 @@
     # --- Hyprland desktop ---
     waybar # status bar
     wofi # app launcher
-    swww # wallpaper daemon
+    awww # wallpaper daemon (formerly swww)
     matugen # material palette generated from the wallpaper
     swaynotificationcenter # swaync: notification daemon + center
     hypridle # idle daemon (lock / dpms)
