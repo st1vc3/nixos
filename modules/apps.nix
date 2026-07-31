@@ -1,10 +1,13 @@
 { pkgs, inputs, ... }:
 
+let
+  unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+in
 {
   environment.systemPackages = with pkgs; [
-    inputs.claude-code-nix.packages.${pkgs.system}.claude-code
+    claude-code
+    unstable.herdr
     git
-    vim
     neovim
     wget
     curl
@@ -14,6 +17,9 @@
     zoxide
     eza
     bat
+    ripgrep
+    mpv
+    starship
     fastfetch
     libnotify
     imagemagick
@@ -41,5 +47,4 @@
   ];
 
   programs.firefox.enable = true;
-  programs.starship.enable = true;
 }
