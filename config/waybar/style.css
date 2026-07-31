@@ -34,9 +34,6 @@ window#waybar {
 #window {
   color: #c4c6cf;
 }
-#window:empty {
-  background: transparent;
-}
 
 #clock {
   color: #adc6ff;
