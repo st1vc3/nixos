@@ -129,16 +129,62 @@
   nixpkgs.config.allowUnfree = true; # required for the NVIDIA driver
 
   # ---------------------------------------------------------------------------
-  # Base packages (keep lean; add per-user tools via home-manager later)
+  # Packages
   # ---------------------------------------------------------------------------
   environment.systemPackages = with pkgs; [
+    # --- core CLI ---
     git
     vim
     wget
     curl
-    kitty # a terminal (Hyprland's default keybind expects one)
-    wl-clipboard
-    brightnessctl
+    jq # waybar/script JSON plumbing
+    fzf # fuzzy finder (zshrc.d/50-fzf.zsh)
+    fastfetch # system info
+    libnotify # notify-send, used across the scripts
+    imagemagick # `magick`, used by swaync-fake-blur
+    playerctl # media keybinds
+    brightnessctl # brightness keybinds
+
+    # --- terminal ---
+    kitty
+
+    # --- Hyprland desktop ---
+    waybar # status bar
+    wofi # app launcher
+    swww # wallpaper daemon
+    matugen # material palette generated from the wallpaper
+    swaynotificationcenter # swaync: notification daemon + center
+    hypridle # idle daemon (lock / dpms)
+    hyprpolkitagent # graphical polkit auth agent
+    hyprshot # screenshots (wraps grim + slurp)
+    hyprland-qtutils # Qt dialogs/utilities Hyprland shells out to
+    grim # screenshot backend
+    slurp # region selection for grim/hyprshot
+    wl-clipboard # wl-copy/wl-paste in scripts
+
+    # --- GUI apps ---
+    nautilus # file manager
+    pavucontrol # PipeWire/PulseAudio volume mixer
+  ];
+
+  # Screen locker - the module wires up the PAM stack hyprlock needs.
+  programs.hyprlock.enable = true;
+
+  # Shell prompt (integrates with the enabled zsh).
+  programs.starship.enable = true;
+
+  # Polkit + GTK/dconf + gvfs so the auth agent and nautilus (trash, mounts,
+  # thumbnails, GSettings) all work properly.
+  security.polkit.enable = true;
+  programs.dconf.enable = true;
+  services.gvfs.enable = true;
+
+  # Fonts, including a Nerd Font for waybar/terminal glyphs (fc-cache provided
+  # by fontconfig, which fonts.packages enables).
+  fonts.packages = with pkgs; [
+    nerd-fonts.jetbrains-mono
+    noto-fonts
+    noto-fonts-emoji
   ];
 
   services.openssh.enable = true;
