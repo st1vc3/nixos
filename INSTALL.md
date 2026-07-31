@@ -76,28 +76,36 @@ don't want a second, conflicting declaration.
 While you're here, sanity-check `system.stateVersion` in `configuration.nix`
 matches the NixOS release you're installing (the generated config shows it).
 
-## 7. Install
+## 7. User password hash (kept out of the public repo)
+
+`configuration.nix` reads the `stivce` password from `/etc/secrets/stivce.hash`
+(via `hashedPasswordFile`), which is intentionally **not** committed. Create it
+on the new root before installing:
+
+```bash
+mkdir -p /mnt/etc/secrets
+nix run nixpkgs#mkpasswd -- -m sha-512 > /mnt/etc/secrets/stivce.hash
+chmod 600 /mnt/etc/secrets/stivce.hash
+```
+
+(It prompts for the password twice, then writes the hash. Root's password is
+set interactively at the end of `nixos-install`.)
+
+## 8. Install
 
 ```bash
 nixos-install --flake .#nixos
 # It will prompt for the root password at the end.
 ```
 
-## 8. Reboot
+## 9. Reboot
 
 ```bash
 reboot        # remove the USB stick
 ```
 
-Log in as `stivce` with the initial password `changeme` (set in
-`configuration.nix`). **Immediately change it:**
-
-```bash
-passwd
-```
-
-Hyprland: at the SDDM login screen pick the **Hyprland** session. Default
-terminal keybind is `Super + Q` (opens kitty).
+Log in as `stivce` with the password you hashed in step 7. At the SDDM screen
+pick the **Hyprland** session; `Super + Q` opens a terminal (kitty).
 
 ## 9. Persist your config
 

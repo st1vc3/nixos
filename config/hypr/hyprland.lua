@@ -65,8 +65,9 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd("systemctl --user start hyprpolkitagent.service")
     hl.exec_cmd("hypridle")
 
-    -- Wallpaper daemon restores the last wallpaper from its cache
-    hl.exec_cmd("awww-daemon")
+    -- Wallpaper: the script starts awww-daemon and sets red.png deterministically
+    -- (don't rely on the awww cache, which is empty on a fresh install).
+    hl.exec_cmd("$HOME/Scripts/set-wallpaper.sh")
 end)
 -- end)
 

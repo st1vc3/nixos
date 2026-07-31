@@ -108,8 +108,10 @@
     isNormalUser = true;
     description = "stivce";
     extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
-    # CHANGE THIS after first boot with `passwd`. Needed to log in initially.
-    initialPassword = "changeme";
+    # Password hash read from a file kept OUTSIDE this (public) repo. Generate on
+    # the target with:  mkpasswd -m sha-512 > /etc/secrets/stivce.hash  (chmod 600)
+    # Never put the hash inline here - the repo is public and it would be crackable.
+    hashedPasswordFile = "/etc/secrets/stivce.hash";
     shell = pkgs.zsh;
   };
   programs.zsh.enable = true;
