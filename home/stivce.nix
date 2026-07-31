@@ -1,26 +1,16 @@
-# Per-user home-manager config for stivce (deploys $HOME files).
 { inputs, ... }:
 
 {
   home.username = "stivce";
   home.homeDirectory = "/home/stivce";
-  # Matches the system stateVersion; do not bump on upgrades.
   home.stateVersion = "26.05";
-
-  # The wallpaper repo (github.com/st1vc3/wallpaper), pinned as a flake input,
-  # symlinked into ~/Pictures/wallpapers. Updating it is a
-  # `nix flake update wallpapers` + rebuild - no manual git clone.
   home.file."Pictures/wallpapers".source = inputs.wallpapers;
 
-  # Wallpaper-setter script, deployed to ~/Scripts/set-wallpaper.sh.
   home.file."Scripts/set-wallpaper.sh" = {
     source = ../scripts/set-wallpaper.sh;
     executable = true;
   };
 
-  # Hyprland + hyprlock/hypridle configs, deployed to ~/.config/hypr/.
-  # Adapted for NixOS (pipewire via systemd socket activation, polkit agent
-  # via its systemd user unit).
   xdg.configFile = {
     "hypr/hyprland.lua".source = ../config/hypr/hyprland.lua;
     "hypr/hypridle.conf".source = ../config/hypr/hypridle.conf;
@@ -31,7 +21,6 @@
       executable = true;
     };
 
-    # Waybar bar + stylesheet (default config, matched to the palette).
     "waybar/config.jsonc".source = ../config/waybar/config.jsonc;
     "waybar/style.css".source = ../config/waybar/style.css;
   };

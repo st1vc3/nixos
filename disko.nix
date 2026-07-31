@@ -1,11 +1,3 @@
-# Declarative disk layout for disko.
-#
-# IMPORTANT: set `device` below to the real target disk BEFORE running disko.
-# On the live ISO, find it with `lsblk -o NAME,SIZE,TYPE,MODEL`.
-#   - NVMe SSDs are typically /dev/nvme0n1
-#   - SATA/USB disks are typically /dev/sda
-#
-# WARNING: disko will WIPE this entire disk. Double-check the device.
 {
   disko.devices = {
     disk = {
