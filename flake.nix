@@ -21,6 +21,12 @@
       url = "github:st1vc3/wallpaper";
       flake = false;
     };
+
+    # SDDM theme (imported in modules/desktop.nix).
+    silentSDDM = {
+      url = "github:uiriansan/SilentSDDM";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -31,10 +37,9 @@
         specialArgs = { inherit inputs; };
         modules = [
           disko.nixosModules.disko
-          ./disko.nix
-          ./hardware-configuration.nix
+          # configuration.nix imports hardware-configuration.nix, disko.nix,
+          # ./modules/*, and ./home.
           ./configuration.nix
-          ./home.nix
         ];
       };
     };
