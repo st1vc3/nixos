@@ -16,13 +16,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Wallpaper repo, tracked declaratively (not a flake, just files).
     wallpapers = {
       url = "github:st1vc3/wallpaper";
       flake = false;
     };
 
-    # SDDM theme (imported in modules/desktop.nix).
     silentSDDM = {
       url = "github:uiriansan/SilentSDDM";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -37,8 +35,6 @@
         specialArgs = { inherit inputs; };
         modules = [
           disko.nixosModules.disko
-          # configuration.nix imports hardware-configuration.nix, disko.nix,
-          # ./modules/*, and ./home.
           ./configuration.nix
         ];
       };

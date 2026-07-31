@@ -1,4 +1,3 @@
-# Audio: PipeWire (replacing PulseAudio).
 { ... }:
 
 {
