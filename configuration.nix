@@ -16,8 +16,8 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.supportedFilesystems = [ "btrfs" ]; # disko provides the filesystems
-  services.fstrim.enable = true; # weekly SSD TRIM
+  boot.supportedFilesystems = [ "btrfs" ];
+  services.fstrim.enable = true;
 
   nix.gc = {
     automatic = true;
@@ -52,7 +52,7 @@
   };
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  nixpkgs.config.allowUnfree = true; # required for the NVIDIA driver
+  nixpkgs.config.allowUnfree = true;
   services.openssh.enable = true;
   system.stateVersion = "26.05";
 }
