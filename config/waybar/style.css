@@ -1,0 +1,75 @@
+/* Waybar style - matches the matugen dark palette (see hyprlock-colors.conf).
+   Semi-transparent module backgrounds so the Hyprland `blur-waybar` layer
+   rule shows through. Font: JetBrainsMono Nerd Font. */
+
+* {
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+}
+
+window#waybar {
+  background: transparent;
+  color: #e2e2e9;
+}
+
+/* Pill-style module groups */
+#workspaces,
+#window,
+#clock,
+#pulseaudio,
+#network,
+#cpu,
+#memory,
+#tray {
+  background: rgba(17, 19, 24, 0.75);
+  padding: 2px 12px;
+  margin: 0 3px;
+  border-radius: 10px;
+}
+
+#window {
+  color: #c4c6cf;
+}
+#window:empty {
+  background: transparent;
+}
+
+#clock {
+  color: #adc6ff;
+  font-weight: 600;
+}
+
+/* Workspaces */
+#workspaces {
+  padding: 2px 6px;
+}
+#workspaces button {
+  color: #8a8f99;
+  padding: 0 6px;
+  background: transparent;
+}
+#workspaces button.active {
+  color: #adc6ff;
+}
+#workspaces button:hover {
+  color: #e2e2e9;
+  background: rgba(255, 255, 255, 0.06);
+}
+#workspaces button.urgent {
+  color: #ffb4ab;
+}
+
+/* Right-side accents */
+#cpu { color: #bfc6dc; }
+#memory { color: #bfc6dc; }
+#network { color: #c4c6cf; }
+#network.disconnected { color: #ffb4ab; }
+#pulseaudio { color: #c4c6cf; }
+#pulseaudio.muted { color: #ffb4ab; }
+
+#tray > .passive { -gtk-icon-effect: dim; }
+#tray > .needs-attention { -gtk-icon-effect: highlight; }

@@ -42,6 +42,10 @@
           source = ./config/hypr/start-hyprlock;
           executable = true;
         };
+
+        # Waybar bar + stylesheet (default config, matched to the palette).
+        "waybar/config.jsonc".source = ./config/waybar/config.jsonc;
+        "waybar/style.css".source = ./config/waybar/style.css;
       };
     };
   };
