@@ -1,7 +1,8 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
 {
   environment.systemPackages = with pkgs; [
+    inputs.claude-code-nix.packages.${pkgs.system}.claude-code
     git
     vim
     wget

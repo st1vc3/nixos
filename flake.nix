@@ -2,9 +2,11 @@
   description = "stivce's NixOS configuration";
 
   inputs = {
-    # Stable branch. Switch to github:NixOS/nixpkgs/nixos-unstable if you want
-    # the newest Hyprland/NVIDIA at the cost of more churn.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    claude-code-nix = {
+      url = "github:sadjow/claude-code-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     disko = {
       url = "github:nix-community/disko";
