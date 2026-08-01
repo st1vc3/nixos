@@ -65,7 +65,7 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd("systemctl --user start hyprpolkitagent.service")
     hl.exec_cmd("hypridle")
 
-    -- Wallpaper: the script starts awww-daemon and sets red.png deterministically
+    -- Wallpaper: the script starts awww-daemon and sets red.jpg deterministically
     -- (don't rely on the awww cache, which is empty on a fresh install).
     hl.exec_cmd("$HOME/Scripts/set-wallpaper.sh")
 end)

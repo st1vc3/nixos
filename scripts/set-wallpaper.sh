@@ -7,7 +7,7 @@
 # Usage:
 #   set-wallpaper.sh [image]
 #
-# With no argument it uses red.png from the wallpaper repo, which home-manager
+# With no argument it uses red.jpg from the wallpaper repo, which home-manager
 # syncs to ~/Pictures/wallpapers. Deployed by nix to ~/Scripts/set-wallpaper.sh.
 #
 # Safe to run from inside the Hyprland session (e.g. an exec-once) or over SSH -
@@ -15,7 +15,7 @@
 set -euo pipefail
 shopt -s nullglob
 
-WALLPAPER="${1:-$HOME/Pictures/wallpapers/abstract/red.png}"
+WALLPAPER="${1:-$HOME/Pictures/wallpapers/abstract/red.jpg}"
 
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 
@@ -57,14 +57,21 @@ awww img "$WALLPAPER"
 # Regenerate colors and hot-reload the apps that support it without a
 # restart. hyprlock and wofi just re-read their color files next time they
 # launch, so nothing to signal there.
+#
+# matugen picks its decoder from the file extension, so a mislabeled or
+# corrupt image makes it hard-error - don't let that also abort wallpaper
+# setting above, or skip reloading kitty/waybar for every other wallpaper.
 if command -v matugen >/dev/null 2>&1; then
-  matugen image "$WALLPAPER" --source-color-index 0
-  # `pgrep && pkill` at top level would trip `set -e` when the process isn't
-  # running (pgrep's exit 1 isn't shielded there), so use `if` instead.
-  if pgrep -x kitty >/dev/null 2>&1; then
-    pkill -USR1 kitty
-  fi
-  if pgrep -x waybar >/dev/null 2>&1; then
-    pkill -SIGUSR2 waybar
+  if matugen image "$WALLPAPER" --source-color-index 0; then
+    # `pgrep && pkill` at top level would trip `set -e` when the process
+    # isn't running (pgrep's exit 1 isn't shielded there), so use `if`.
+    if pgrep -x kitty >/dev/null 2>&1; then
+      pkill -USR1 kitty
+    fi
+    if pgrep -x waybar >/dev/null 2>&1; then
+      pkill -SIGUSR2 waybar
+    fi
+  else
+    echo "set-wallpaper: matugen failed to generate a theme for $WALLPAPER (wallpaper is still set)" >&2
   fi
 fi
