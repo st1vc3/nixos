@@ -2,6 +2,7 @@
 
 let
   unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
+  cursebreaker = pkgs.callPackage ../pkgs/cursebreaker.nix { };
 in
 {
   environment.systemPackages = with pkgs; [
@@ -52,6 +53,7 @@ in
     lutris
     winetricks
     gamemode
+    cursebreaker
   ];
 
   programs.firefox.enable = true;
