@@ -41,7 +41,6 @@
     isNormalUser = true;
     description = "stivce";
     extraGroups = [ "wheel" "networkmanager" "video" "audio" "libvirtd" ];
-    hashedPasswordFile = "/etc/secrets/stivce.hash";
     shell = pkgs.zsh;
   };
   programs.zsh.enable = true;
