@@ -4,7 +4,7 @@
   imports = [ inputs.silentSDDM.nixosModules.default ];
 
   programs.hyprland.enable = true;
-  programs.hyprland.withUWSM = false;
+  programs.hyprland.withUWSM = true;
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = true;
