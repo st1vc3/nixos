@@ -50,7 +50,8 @@ local function matugenHex(name, fallback)
     return (ok and hex) or fallback
 end
 
-local accentHex = matugenHex("accent", "ffffff")
+local accentHex  = matugenHex("accent", "ffffff")
+local surfaceHex = matugenHex("surface", "111318")
 
 
 ---------------------
@@ -274,6 +275,12 @@ hl.config({
     misc = {
         force_default_wallpaper = 0,
         disable_hyprland_logo   = true,
+        -- Matches the matugen surface color, so the moment before
+        -- scripts/set-wallpaper.sh finishes starting awww and setting the
+        -- real wallpaper (unavoidably sequential: start the daemon, wait
+        -- for it, then load the image) is a themed dark tone instead of a
+        -- jarring flash of pure black.
+        background_color = tonumber("0xff" .. surfaceHex),
         -- If hyprlock dies while it holds the session lock (crash, or a
         -- service restart killing it mid-lock), Hyprland falls back to its
         -- own built-in "lockscreen app died" screen and refuses to let a

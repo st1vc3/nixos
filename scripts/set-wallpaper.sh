@@ -53,9 +53,12 @@ fi
 # because one is already bound to the socket.
 if ! awww query >/dev/null 2>&1; then
   awww-daemon >/dev/null 2>&1 &
-  for _ in $(seq 1 25); do
+  # Poll quickly - this only runs during the black-screen window at session
+  # start (see hyprland.lua's background_color), so shaving off the 0.2s
+  # steps here directly shortens it. 100 x 0.05s = same 5s worst-case cap.
+  for _ in $(seq 1 100); do
     awww query >/dev/null 2>&1 && break
-    sleep 0.2
+    sleep 0.05
   done
 fi
 
