@@ -249,6 +249,12 @@ hl.config({
     misc = {
         force_default_wallpaper = 0,
         disable_hyprland_logo   = true,
+        -- If hyprlock dies while it holds the session lock (crash, or a
+        -- service restart killing it mid-lock), Hyprland falls back to its
+        -- own built-in "lockscreen app died" screen and refuses to let a
+        -- new hyprlock reattach without this - leaving you stuck until a
+        -- TTY-based recovery. Let a fresh hyprlock reclaim it instead.
+        allow_session_lock_restore = true,
     },
 })
 
