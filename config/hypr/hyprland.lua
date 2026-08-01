@@ -273,8 +273,12 @@ hl.config({
 
 hl.config({
     misc = {
-        force_default_wallpaper = 0,
-        disable_hyprland_logo   = true,
+        force_default_wallpaper  = 0,
+        disable_hyprland_logo    = true,
+        -- disable_hyprland_logo only hides the logo graphic - this is the
+        -- separate "<quote>" splash text, which otherwise lingers oddly
+        -- underneath the wallpaper for a moment once it loads.
+        disable_splash_rendering = true,
         -- Matches the matugen surface color, so the moment before
         -- scripts/set-wallpaper.sh finishes starting awww and setting the
         -- real wallpaper (unavoidably sequential: start the daemon, wait
@@ -492,3 +496,10 @@ for name, ns in pairs({
 }) do
     pcall(hl.layer_rule, { name = name, match = { namespace = ns }, blur = true, ignore_alpha = 0.0 })
 end
+
+-- Hyprland's own layersIn fade animation applies to every new layer-shell
+-- surface, including awww's wallpaper layer - on top of the matugen
+-- fallback color and awww's own transition (already set to "none" in
+-- set-wallpaper.sh), this was the last source of visible fade-in delay at
+-- session start.
+pcall(hl.layer_rule, { name = "no-anim-wallpaper", match = { namespace = "awww-daemon" }, no_anim = true })
