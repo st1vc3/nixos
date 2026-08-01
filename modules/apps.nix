@@ -44,7 +44,19 @@ in
     psmisc
     volantes-cursors
     kdePackages.qt6ct
+    prismlauncher
+    discord
+    telegram-desktop
+    whatsapp-electron
+    virt-manager
+    lutris
+    wineWowPackages.waylandFull
+    winetricks
+    gamemode
   ];
 
   programs.firefox.enable = true;
+  programs.steam.enable = true;
+
+  virtualisation.libvirtd.enable = true;
 }
