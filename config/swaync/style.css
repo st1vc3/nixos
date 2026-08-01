@@ -1,16 +1,13 @@
+/* Colors come from colors.css (matugen-generated after the first wallpaper
+   pick via scripts/misc/wallpaper-picker; falls back to the checked-in
+   default otherwise). Generic translucent-white utility tokens below are
+   left as-is since they aren't palette-specific. */
+@import url("colors.css");
+
 :root {
-  --cc-bg: rgba(18, 19, 24, 0.3);
-  --noti-border-color: rgba(69, 70, 79, 0.3);
-  --noti-bg: 26, 27, 33;
-  --noti-bg-alpha: 0.15;
-  --noti-bg-darker: rgba(18, 19, 24, 0.3);
-  --noti-bg-hover: rgba(40, 42, 47, 0.4);
-  --noti-bg-focus: rgba(40, 42, 47, 0.3);
   --noti-close-bg: rgba(255, 255, 255, 0.1);
   --noti-close-bg-hover: rgba(255, 255, 255, 0.2);
-  --text-color: rgb(255, 255, 255);
   --text-color-disabled: rgba(255, 255, 255, 0.4);
-  --bg-selected: rgba(178, 197, 255, 0.3);
   --notification-icon-size: 64px;
   --notification-app-icon-size: calc(var(--notification-icon-size) / 3);
   --notification-group-icon-size: 32px;
@@ -23,19 +20,9 @@
   --group-collapse-transition: opacity 400ms ease-in-out;
 }
 
-@define-color cc-bg rgba(18, 19, 24, 0.3);
-@define-color noti-border-color rgba(69, 70, 79, 0.3);
-@define-color noti-bg rgba(26, 27, 33, 0.15);
-@define-color noti-bg-opaque rgb(26, 27, 33);
-@define-color noti-bg-darker rgba(18, 19, 24, 0.3);
-@define-color noti-bg-hover rgba(40, 42, 47, 0.4);
-@define-color noti-bg-hover-opaque rgb(40, 42, 47);
-@define-color noti-bg-focus rgba(40, 42, 47, 0.3);
 @define-color noti-close-bg rgba(255, 255, 255, 0.1);
 @define-color noti-close-bg-hover rgba(255, 255, 255, 0.2);
-@define-color text-color rgb(255, 255, 255);
 @define-color text-color-disabled rgba(255, 255, 255, 0.4);
-@define-color bg-selected rgba(178, 197, 255, 0.3);
 
 notificationwindow, blankwindow {
   background: transparent;

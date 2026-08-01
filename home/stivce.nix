@@ -37,7 +37,7 @@
 
   home.file.".claude/CLAUDE.md".source = ../config/AGENTS.md;
 
-  # matugen writes hyprlock/kitty/waybar/wofi colors straight to these paths
+  # matugen writes hyprlock/kitty/waybar/wofi/swaync colors straight to these paths
   # at runtime (scripts/set-wallpaper.sh), so home-manager can't manage them
   # as symlinks - it would either fail to write through a read-only Nix
   # store target, or fight matugen for ownership on every rebuild. Instead
@@ -53,6 +53,7 @@
     seed "$HOME/.config/kitty/colors.conf" "${../config/matugen/defaults/kitty-colors.conf}"
     seed "$HOME/.config/waybar/colors.css" "${../config/matugen/defaults/waybar-colors.css}"
     seed "$HOME/.config/wofi/colors.css" "${../config/matugen/defaults/wofi-colors.css}"
+    seed "$HOME/.config/swaync/colors.css" "${../config/matugen/defaults/swaync-colors.css}"
   '';
 
   xdg.configFile = {
