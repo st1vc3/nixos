@@ -17,12 +17,20 @@
     # SDDM runs as its own system user before login, so it can't read
     # ~/Pictures/wallpapers (mode 0700) - copy the same file in at build time.
     backgrounds.wallpaper = "${inputs.wallpapers}/abstract/red.jpg";
+    # SilentSDDM shows its own idle "lock screen" (clock + "press any key")
+    # before the actual login form - two independent sections, each with
+    # their own background/use-background-color, so both need setting or
+    # you only see the real wallpaper after the first keypress.
     settings."LoginScreen" = {
       background = "red.jpg";
       # The theme's own default sets this true (solid background-color
       # fill), which silently wins over `background` since overrides are
       # appended as a second [LoginScreen] section, not a replacement -
       # without this, the image is copied in but never actually shown.
+      "use-background-color" = false;
+    };
+    settings."LockScreen" = {
+      background = "red.jpg";
       "use-background-color" = false;
     };
   };
