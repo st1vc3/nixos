@@ -62,7 +62,10 @@ if ! awww query >/dev/null 2>&1; then
   done
 fi
 
-awww img "$WALLPAPER"
+# -t none: awww's default "simple" transition fades in over ~250-300ms at
+# its default transition-step; this makes the swap immediate instead
+# (matches hyprland.lua's no-anim layer rule for the same surface).
+awww img -t none "$WALLPAPER"
 
 # Regenerate colors and hot-reload the apps that support it without a
 # restart. hyprlock and wofi just re-read their color files next time they
