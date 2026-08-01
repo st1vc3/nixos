@@ -41,6 +41,7 @@
     isNormalUser = true;
     description = "stivce";
     extraGroups = [ "wheel" "networkmanager" "video" "audio" "libvirtd" ];
+    initialPassword = "changeme";
     shell = pkgs.zsh;
   };
   programs.zsh.enable = true;
