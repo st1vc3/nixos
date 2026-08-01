@@ -319,7 +319,7 @@ hl.bind(mainMod .. " + SHIFT + Print",   hl.dsp.exec_cmd("hyprshot -m output --c
 hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd("$HOME/.local/bin/wofi-menu/powermenu"))
 hl.bind("ALT + SHIFT + 3", hl.dsp.exec_cmd("$HOME/.local/bin/misc/screenshot-region-save"))
 hl.bind("ALT + SHIFT + 4", hl.dsp.exec_cmd("$HOME/.local/bin/misc/screenshot-region"))
-hl.bind(mainMod .. " + L",  hl.dsp.exec_cmd("$HOME/.config/hypr/start-hyprlock"))
+hl.bind(mainMod .. " + SHIFT + Q",  hl.dsp.exec_cmd("$HOME/.config/hypr/start-hyprlock"))
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd("$HOME/Scripts/set-wallpaper.sh"))
 
 -- Move focus with mainMod + arrow keys
