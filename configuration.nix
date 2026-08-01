@@ -40,7 +40,7 @@
   users.users.stivce = {
     isNormalUser = true;
     description = "stivce";
-    extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
+    extraGroups = [ "wheel" "networkmanager" "video" "audio" "libvirtd" ];
     hashedPasswordFile = "/etc/secrets/stivce.hash";
     shell = pkgs.zsh;
   };
