@@ -50,7 +50,7 @@ in
     whatsapp-electron
     virt-manager
     lutris
-    wineWowPackages.waylandFull
+    wineWowPackages.stable
     winetricks
     gamemode
   ];
