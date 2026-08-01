@@ -13,6 +13,11 @@
   programs.silentSDDM = {
     enable = true;
     theme = "catppuccin-mocha";
+    # Match the real desktop background instead of the theme's own default.
+    # SDDM runs as its own system user before login, so it can't read
+    # ~/Pictures/wallpapers (mode 0700) - copy the same file in at build time.
+    backgrounds.wallpaper = "${inputs.wallpapers}/abstract/red.jpg";
+    settings."LoginScreen".background = "red.jpg";
   };
 
   programs.hyprlock.enable = true;

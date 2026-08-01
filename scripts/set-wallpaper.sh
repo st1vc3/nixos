@@ -36,6 +36,13 @@ if [ -z "${WAYLAND_DISPLAY:-}" ]; then
   exit 1
 fi
 
+# hyprctl (used below to pick up the matugen accent in window borders) needs
+# its own instance signature, separate from WAYLAND_DISPLAY.
+if [ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+  HYPRLAND_INSTANCE_SIGNATURE="$(ls -t "$XDG_RUNTIME_DIR/hypr" 2>/dev/null | head -1)"
+  export HYPRLAND_INSTANCE_SIGNATURE
+fi
+
 if [ ! -f "$WALLPAPER" ]; then
   echo "set-wallpaper: image not found: $WALLPAPER" >&2
   exit 1
@@ -56,7 +63,8 @@ awww img "$WALLPAPER"
 
 # Regenerate colors and hot-reload the apps that support it without a
 # restart. hyprlock and wofi just re-read their color files next time they
-# launch, so nothing to signal there.
+# launch (a spawned-per-use client and an overlay respectively), so nothing
+# to signal there.
 #
 # matugen picks its decoder from the file extension, so a mislabeled or
 # corrupt image makes it hard-error - don't let that also abort wallpaper
@@ -71,6 +79,12 @@ if command -v matugen >/dev/null 2>&1; then
     if pgrep -x waybar >/dev/null 2>&1; then
       pkill -SIGUSR2 waybar
     fi
+    if pgrep -x swaync >/dev/null 2>&1; then
+      swaync-client --reload-css >/dev/null 2>&1 || true
+    fi
+    # Picks up the new accent color in hyprland.lua's window borders.
+    # Best-effort: fine if this isn't a live session.
+    hyprctl reload config-only >/dev/null 2>&1 || true
   else
     echo "set-wallpaper: matugen failed to generate a theme for $WALLPAPER (wallpaper is still set)" >&2
   fi

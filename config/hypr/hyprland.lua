@@ -29,6 +29,30 @@ hl.monitor({
 })
 
 
+-------------------------
+---- MATUGEN COLORS -----
+-------------------------
+
+-- Reads the matugen-generated accent color (config/matugen/) so the active
+-- window border matches hyprlock/kitty/waybar/wofi. This file is re-read
+-- on every config reload, and scripts/set-wallpaper.sh reloads Hyprland
+-- after regenerating it, so the border updates with the rest of the theme.
+-- Falls back to a fixed color if the file is missing/unparseable (e.g.
+-- before home/stivce.nix's seedMatugenDefaults has run).
+local function matugenHex(name, fallback)
+    local ok, hex = pcall(function()
+        local f = io.open(os.getenv("HOME") .. "/.config/hypr/hyprlock-colors.conf", "r")
+        if not f then return nil end
+        local content = f:read("*a")
+        f:close()
+        return content:match("%$" .. name .. "%s*=%s*rgb%((%x+)%)")
+    end)
+    return (ok and hex) or fallback
+end
+
+local accentHex = matugenHex("accent", "ffffff")
+
+
 ---------------------
 ---- MY PROGRAMS ----
 ---------------------
@@ -60,10 +84,11 @@ hl.on("hyprland.start", function ()
     -- Desktop shell
     hl.exec_cmd("waybar")
     hl.exec_cmd("swaync")
-    -- NixOS: launch the polkit agent via its systemd user unit instead of a
-    -- distro /usr/libexec path.
+    -- NixOS: launch these via their systemd user units instead of a raw
+    -- exec_cmd - UWSM already starts both as part of graphical-session.target,
+    -- so a plain exec_cmd("hypridle") spawned a redundant second instance.
     hl.exec_cmd("systemctl --user start hyprpolkitagent.service")
-    hl.exec_cmd("hypridle")
+    hl.exec_cmd("systemctl --user start hypridle.service")
 
     -- Wallpaper: the script starts awww-daemon and sets red.jpg deterministically
     -- (don't rely on the awww cache, which is empty on a fresh install).
@@ -132,8 +157,8 @@ hl.config({
         border_size = 2,
 
         col = {
-            active_border   = "rgb(ffffff)",
-            inactive_border = { colors = {"rgba(808080b3)", "rgba(ffffffb3)"}, angle = 45 },
+            active_border   = "rgb(" .. accentHex .. ")",
+            inactive_border = { colors = {"rgba(808080b3)", "rgba(" .. accentHex .. "b3)"}, angle = 45 },
         },
 
         -- Set to true to enable resizing windows by clicking and dragging on borders and gaps
