@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Interactive wallpaper picker (SUPER+SHIFT+F1, see config/hypr/hyprland.lua).
+# Ported from github.com/stivce/arch.dot's set-wallpaper; delegates the
+# actual apply-and-retheme step to Scripts/set-wallpaper.sh instead of
+# duplicating the matugen/reload logic.
+set -euo pipefail
+
+WALLPAPER_DIR="$HOME/Pictures/wallpapers"
+
+# -L: ~/Pictures/wallpapers is a home-manager symlink into the flake's
+# `wallpapers` input, so find needs to follow it to see any files at all.
+# No -maxdepth: wallpapers are organized in subdirectories (e.g. abstract/),
+# so entries are shown/reconstructed relative to WALLPAPER_DIR rather than
+# by bare basename (which would collide/mis-resolve across subdirectories).
+CHOICE="$(find -L "$WALLPAPER_DIR" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+    | sort \
+    | xargs -I{} realpath --relative-to="$WALLPAPER_DIR" {} \
+    | wofi --dmenu --prompt "Wallpaper" \
+    | xargs -I{} realpath "$WALLPAPER_DIR/{}" || true)"
+
+[[ -z "$CHOICE" ]] && exit 0
+
+exec "$HOME/Scripts/set-wallpaper.sh" "$CHOICE"

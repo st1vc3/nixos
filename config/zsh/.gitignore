@@ -2,14 +2,8 @@
 *.zwc
 .zcompdump*
 
-# Auto-installed by plugin manager
-plugins/
-
 # Machine-local overrides
 local.zsh
 
 # macOS metadata
 .DS_Store
-
-# installed plugins
-./plugins/

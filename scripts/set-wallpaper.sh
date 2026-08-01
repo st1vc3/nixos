@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Set the desktop wallpaper via awww (the wallpaper daemon, formerly swww).
+# Set the desktop wallpaper via awww (the wallpaper daemon, formerly swww),
+# then regenerate the matugen color scheme to match it (hyprlock, kitty,
+# waybar, wofi - see config/matugen/) and live-reload the apps that support
+# it. scripts/misc/wallpaper-picker calls this after an interactive pick.
 #
 # Usage:
 #   set-wallpaper.sh [image]
@@ -10,6 +13,7 @@
 # Safe to run from inside the Hyprland session (e.g. an exec-once) or over SSH -
 # it discovers the Wayland display and starts awww-daemon if needed.
 set -euo pipefail
+shopt -s nullglob
 
 WALLPAPER="${1:-$HOME/Pictures/wallpapers/abstract/red.png}"
 
@@ -49,3 +53,18 @@ if ! awww query >/dev/null 2>&1; then
 fi
 
 awww img "$WALLPAPER"
+
+# Regenerate colors and hot-reload the apps that support it without a
+# restart. hyprlock and wofi just re-read their color files next time they
+# launch, so nothing to signal there.
+if command -v matugen >/dev/null 2>&1; then
+  matugen image "$WALLPAPER" --source-color-index 0
+  # `pgrep && pkill` at top level would trip `set -e` when the process isn't
+  # running (pgrep's exit 1 isn't shielded there), so use `if` instead.
+  if pgrep -x kitty >/dev/null 2>&1; then
+    pkill -USR1 kitty
+  fi
+  if pgrep -x waybar >/dev/null 2>&1; then
+    pkill -SIGUSR2 waybar
+  fi
+fi

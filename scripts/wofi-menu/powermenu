@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Power menu shown via SUPER+ESCAPE (see config/hypr/hyprland.lua).
+# Ported from github.com/stivce/arch.dot; systemctl is the right choice here
+# since NixOS uses systemd (arch.dot's own variant, not void.dot's loginctl one).
+set -euo pipefail
+
+choice=$(printf "󰐥 Shutdown\n󰜉 Reboot\n󰒲 Suspend\n󍯍 Logout\n󰌾 Lock" | wofi --dmenu --prompt "Power" 2>/dev/null)
+
+case "$choice" in
+    *Shutdown) systemctl poweroff ;;
+    *Reboot)   systemctl reboot ;;
+    *Suspend)  systemctl suspend ;;
+    *Logout)   hyprctl dispatch exit ;;
+    *Lock)     "$HOME/.config/hypr/start-hyprlock" ;;
+esac

@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-killall -q hyprlock || true
+# Idempotent: if hyprlock is already up, don't kill+relaunch it, which would
+# briefly unlock the session before the new instance takes over.
+pgrep -x hyprlock >/dev/null && exit 0
 
 grim "$HOME/.cache/lockscreen.png" || { notify-send "Failed to capture lockscreen"; exit 1; }
 chmod 600 "$HOME/.cache/lockscreen.png"

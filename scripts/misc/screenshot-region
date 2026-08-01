@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# ALT+SHIFT+3 (see config/hypr/hyprland.lua): region screenshot to clipboard
+# only, via the hyprquickframe package (modules/apps.nix).
+export QUICKFRAME_CLIPBOARD_ONLY=1
+exec hyprquickframe 2>&1

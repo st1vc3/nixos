@@ -3,6 +3,7 @@
 let
   unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
   cursebreaker = pkgs.callPackage ../pkgs/cursebreaker.nix { };
+  hyprquickframe = inputs.hyprquickframe.packages.${pkgs.system}.default;
 in
 {
   environment.systemPackages = with pkgs; [
@@ -36,6 +37,8 @@ in
     hypridle
     hyprpolkitagent
     hyprshot
+    hyprshutdown
+    hyprquickframe
     hyprland-qtutils
     grim
     slurp
@@ -52,12 +55,12 @@ in
     virt-manager
     lutris
     winetricks
-    gamemode
     cursebreaker
   ];
 
   programs.firefox.enable = true;
   programs.steam.enable = true;
+  programs.gamemode.enable = true;
 
   virtualisation.libvirtd.enable = true;
 }

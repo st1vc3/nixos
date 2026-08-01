@@ -25,6 +25,7 @@ My NixOS installation, configured declaratively with [flakes](https://nixos.wiki
 | `home-manager` | `release-26.05` - per-user `$HOME` state |
 | `wallpapers` | [`st1vc3/wallpaper`](https://github.com/st1vc3/wallpaper), pinned (not a flake) |
 | `silentSDDM` | [`uiriansan/SilentSDDM`](https://github.com/uiriansan/SilentSDDM) - SDDM theme |
+| `hyprquickframe` | [`Ronin-CK/HyprQuickFrame`](https://github.com/Ronin-CK/HyprQuickFrame) - region screenshot UI |
 
 ## Layout
 
@@ -40,20 +41,25 @@ My NixOS installation, configured declaratively with [flakes](https://nixos.wiki
 | `modules/apps.nix` | System packages + Firefox + Starship |
 | `home/default.nix` | home-manager wiring |
 | `home/stivce.nix` | Per-user `$HOME` files (hypr, waybar, scripts, wallpaper) |
-| `config/hypr/`, `config/waybar/` | Configs deployed to `~/.config/` |
+| `config/hypr/`, `config/waybar/`, `config/wofi/`, `config/swaync/`, `config/kitty/`, `config/nvim/`, `config/herdr/`, `config/zsh/`, `config/hyprquickframe/` | Configs deployed to `~/.config/` |
 | `scripts/set-wallpaper.sh` | Wallpaper setter (awww) → `~/Scripts/` |
+| `scripts/wofi-menu/`, `scripts/misc/` | Power menu + region-screenshot scripts → `~/.local/bin/` |
+| `pkgs/cursebreaker.nix` | Custom package: WoW addon manager, not in nixpkgs |
 | `INSTALL.md` | Step-by-step install from the NixOS live ISO |
 
 ## Desktop
 
 Hyprland (via **UWSM**) with: **waybar** (bar), **wofi** (launcher),
 **swaync** (notifications), **hyprlock**/**hypridle** (lock + idle),
-**hyprpolkitagent** (auth), **awww** (wallpaper), **hyprshot** (screenshots),
-**nautilus**, **firefox**, **kitty**. Config lives in `config/hypr/`; wallpapers
-sync from the `wallpapers` input to `~/Pictures/wallpapers`. Login screen themed
-with **SilentSDDM** (`catppuccin-mocha`).
+**hyprpolkitagent** (auth), **awww** (wallpaper), **hyprshot** (full/output
+screenshots), **hyprquickframe** (region screenshots, `ALT+SHIFT+3/4`),
+**hyprshutdown** (graceful compositor exit, `SUPER+M`), **nautilus**,
+**firefox**, **kitty**. Config lives in `config/hypr/`; wallpapers sync from
+the `wallpapers` input to `~/Pictures/wallpapers`. Login screen themed with
+**SilentSDDM** (`catppuccin-mocha`).
 
 Set the wallpaper: `~/Scripts/set-wallpaper.sh` (default `red.png`) or `SUPER+F1`.
+Power menu: `SUPER+ESCAPE`.
 
 ## Install
 
@@ -77,8 +83,6 @@ sudo nixos-rebuild switch --flake ~/nixos#nixos
 - **NVIDIA hybrid gotcha:** do **not** set `GBM_BACKEND` or `AQ_DRM_DEVICES` in
   the environment - they crash Hyprland's aquamarine backend on this box. With
   `hardware.nvidia.open = true` + modesetting, the NVIDIA card is auto-selected.
-- Some Hyprland keybinds reference personal scripts under `~/.local/bin/` that
-  are not (yet) tracked here; they no-op until those are added.
 - **Default login is `stivce` / `changeme`** (`initialPassword` in
   `configuration.nix`, only applied on first account creation) - change it
   with `passwd` right after first login. This repo is public and SSH is
