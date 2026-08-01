@@ -76,20 +76,20 @@ don't want a second, conflicting declaration.
 While you're here, sanity-check `system.stateVersion` in `configuration.nix`
 matches the NixOS release you're installing (the generated config shows it).
 
-## 7. User password hash (kept out of the public repo)
+## 7. User password
 
-`configuration.nix` reads the `stivce` password from `/etc/secrets/stivce.hash`
-(via `hashedPasswordFile`), which is intentionally **not** committed. Create it
-on the new root before installing:
+`configuration.nix` sets `initialPassword = "changeme"` for `stivce`, which
+NixOS only applies the first time the account is created (a later
+`nixos-rebuild switch` won't reset it once you've changed it). Nothing to do
+here before install, but:
 
-```bash
-mkdir -p /mnt/etc/secrets
-nix run nixpkgs#mkpasswd -- -m sha-512 > /mnt/etc/secrets/stivce.hash
-chmod 600 /mnt/etc/secrets/stivce.hash
-```
+> **Change it immediately after first login:** `passwd`. This account is in
+> `wheel` (sudo) and `services.openssh.enable = true` is on with password
+> auth allowed and the firewall port open by default, so leaving the login as
+> `stivce` / `changeme` is a real risk on any network you don't fully trust —
+> and since this repo is public, that default is not a secret.
 
-(It prompts for the password twice, then writes the hash. Root's password is
-set interactively at the end of `nixos-install`.)
+Root's password is set interactively at the end of `nixos-install`.
 
 ## 8. Install
 
@@ -104,10 +104,11 @@ nixos-install --flake .#nixos
 reboot        # remove the USB stick
 ```
 
-Log in as `stivce` with the password you hashed in step 7. At the SDDM screen
-pick the **Hyprland** session; `Super + Q` opens a terminal (kitty).
+Log in as `stivce` with the password from step 7 (`changeme` — change it
+right away with `passwd`). At the SDDM screen pick the **Hyprland** session;
+`Super + Q` opens a terminal (kitty).
 
-## 9. Persist your config
+## 10. Persist your config
 
 Copy the (now hardware-specific) repo to your home dir and keep it in git:
 

@@ -46,7 +46,7 @@ My NixOS installation, configured declaratively with [flakes](https://nixos.wiki
 
 ## Desktop
 
-Hyprland (plain session, not UWSM) with: **waybar** (bar), **wofi** (launcher),
+Hyprland (via **UWSM**) with: **waybar** (bar), **wofi** (launcher),
 **swaync** (notifications), **hyprlock**/**hypridle** (lock + idle),
 **hyprpolkitagent** (auth), **awww** (wallpaper), **hyprshot** (screenshots),
 **nautilus**, **firefox**, **kitty**. Config lives in `config/hypr/`; wallpapers
@@ -79,3 +79,7 @@ sudo nixos-rebuild switch --flake ~/nixos#nixos
   `hardware.nvidia.open = true` + modesetting, the NVIDIA card is auto-selected.
 - Some Hyprland keybinds reference personal scripts under `~/.local/bin/` that
   are not (yet) tracked here; they no-op until those are added.
+- **Default login is `stivce` / `changeme`** (`initialPassword` in
+  `configuration.nix`, only applied on first account creation) - change it
+  with `passwd` right after first login. This repo is public and SSH is
+  enabled with password auth, so don't leave it as-is on an untrusted network.
