@@ -127,11 +127,11 @@
     "wallpapers": {
       "flake": false,
       "locked": {
-        "lastModified": 1785487315,
-        "narHash": "sha256-qMLYaR6BBlkOUJVVk7jjxFrcBzzTxUEtKW8aRjaHIn8=",
+        "lastModified": 1785619694,
+        "narHash": "sha256-G74bKzpauHcz+rHLegszbZxG0p+AWC+bXRf3Hgi/yEo=",
         "owner": "st1vc3",
         "repo": "wallpaper",
-        "rev": "98687d6b74878cee8b11227f2f72651b12c772cb",
+        "rev": "41c38d09ac60056d05527b9d1ff1db03a52f6d63",
         "type": "github"
       },
       "original": {
