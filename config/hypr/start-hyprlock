@@ -5,6 +5,9 @@ set -euo pipefail
 # briefly unlock the session before the new instance takes over.
 pgrep -x hyprlock >/dev/null && exit 0
 
-grim "$HOME/.cache/lockscreen.png" || { notify-send "Failed to capture lockscreen"; exit 1; }
-chmod 600 "$HOME/.cache/lockscreen.png"
+# JPEG instead of grim's default PNG: ~0.06s vs ~2.2s for a 4K capture (PNG's
+# lossless encode is the slow part, not the capture itself), and hyprlock
+# blurs this heavily anyway so the lossy compression is invisible.
+grim -t jpeg "$HOME/.cache/lockscreen.jpg" || { notify-send "Failed to capture lockscreen"; exit 1; }
+chmod 600 "$HOME/.cache/lockscreen.jpg"
 exec hyprlock
