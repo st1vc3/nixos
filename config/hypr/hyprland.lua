@@ -320,8 +320,8 @@ hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd("$HOME/.local/bin/wofi-menu/powe
 hl.bind("ALT + SHIFT + 3", hl.dsp.exec_cmd("$HOME/.local/bin/misc/screenshot-region-save"))
 hl.bind("ALT + SHIFT + 4", hl.dsp.exec_cmd("$HOME/.local/bin/misc/screenshot-region"))
 hl.bind(mainMod .. " + SHIFT + Q",  hl.dsp.exec_cmd("$HOME/.config/hypr/start-hyprlock"))
-hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd("$HOME/Scripts/set-wallpaper.sh"))
-hl.bind(mainMod .. " + SHIFT + F1", hl.dsp.exec_cmd("$HOME/.local/bin/misc/wallpaper-picker"))
+hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd("$HOME/.local/bin/misc/wallpaper-picker"))
+hl.bind(mainMod .. " + SHIFT + F1", hl.dsp.exec_cmd("$HOME/Scripts/set-wallpaper.sh"))
 
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))

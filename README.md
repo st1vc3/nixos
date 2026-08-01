@@ -42,8 +42,9 @@ My NixOS installation, configured declaratively with [flakes](https://nixos.wiki
 | `home/default.nix` | home-manager wiring |
 | `home/stivce.nix` | Per-user `$HOME` files (hypr, waybar, scripts, wallpaper) |
 | `config/hypr/`, `config/waybar/`, `config/wofi/`, `config/swaync/`, `config/kitty/`, `config/nvim/`, `config/herdr/`, `config/zsh/`, `config/hyprquickframe/` | Configs deployed to `~/.config/` |
-| `scripts/set-wallpaper.sh` | Wallpaper setter (awww) → `~/Scripts/` |
-| `scripts/wofi-menu/`, `scripts/misc/` | Power menu + region-screenshot scripts → `~/.local/bin/` |
+| `config/matugen/` | matugen config + templates (inputs to the theme switcher; see below) |
+| `scripts/set-wallpaper.sh` | Wallpaper setter (awww) + matugen retheme → `~/Scripts/` |
+| `scripts/wofi-menu/`, `scripts/misc/` | Power menu, region-screenshot, wallpaper-picker scripts → `~/.local/bin/` |
 | `pkgs/cursebreaker.nix` | Custom package: WoW addon manager, not in nixpkgs |
 | `INSTALL.md` | Step-by-step install from the NixOS live ISO |
 
@@ -58,8 +59,22 @@ screenshots), **hyprquickframe** (region screenshots, `ALT+SHIFT+3/4`),
 the `wallpapers` input to `~/Pictures/wallpapers`. Login screen themed with
 **SilentSDDM** (`catppuccin-mocha`).
 
-Set the wallpaper: `~/Scripts/set-wallpaper.sh` (default `red.png`) or `SUPER+F1`.
+Reset to the default wallpaper: `~/Scripts/set-wallpaper.sh` or `SUPER+SHIFT+F1`.
 Power menu: `SUPER+ESCAPE`.
+
+### Theme switcher
+
+`SUPER+F1` opens a wofi picker over everything in `~/Pictures/wallpapers`
+(ported from [`stivce/arch.dot`](https://github.com/stivce/arch.dot)). Picking
+one sets it and runs `matugen image` to regenerate a Material You palette for
+hyprlock, kitty, and the waybar/wofi color partials, then reloads kitty
+(`SIGUSR1`) and waybar (`SIGUSR2`) live. `config/matugen/` holds the templates
+(Nix-managed, edit these); the generated files
+(`~/.config/{hypr/hyprlock-colors.conf,kitty/colors.conf,waybar/colors.css,wofi/colors.css}`)
+are seeded once from `config/matugen/defaults/` on first activation and then
+left alone by home-manager - matugen fully owns them after that, so a
+`nixos-rebuild switch` won't reset a theme you've already picked. swaync and
+GTK/Qt apps aren't themed by this (upstream doesn't template them either).
 
 ## Install
 
