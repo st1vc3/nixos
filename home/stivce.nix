@@ -51,5 +51,11 @@
 
     "waybar/config.jsonc".source = ../config/waybar/config.jsonc;
     "waybar/style.css".source = ../config/waybar/style.css;
+
+    "swaync/config.json".source = ../config/swaync/config.json;
+    "swaync/style.css".source = ../config/swaync/style.css;
+
+    "wofi/config".source = ../config/wofi/config;
+    "wofi/style.css".source = ../config/wofi/style.css;
   };
 }
