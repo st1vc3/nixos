@@ -1,0 +1,53 @@
+# hyprquickframe (github.com/Ronin-CK/HyprQuickFrame) theme.
+# Colors match the matugen dark-blue palette used elsewhere (see
+# hyprlock-colors.conf: accent #adc6ff, surface #111318).
+
+# Main highlight color on the active tab
+accent = "#adc6ff"
+# Text color on the active tab (should contrast with accent)
+accentText = "#111318"
+# Dim overlay opacity when selecting (0.0 - 1.0)
+dimOpacity = 0.6
+# Corner radius on selection outline
+borderRadius = 10
+# Selection outline thickness
+outlineThickness = 2
+# Distance from bottom edge to the bar
+bottomMargin = 60
+# Global animation toggle (true/false)
+animations = true
+# Tool to use for the "edit" screenshot action (e.g., "satty" or "gradia")
+annotationTool = "satty"
+
+[bar]
+# Segmented control background
+background = "rgba(17, 19, 24, 0.75)"
+# Segmented control border
+border = "rgba(255, 255, 255, 0.15)"
+# Inactive tab text color
+text = "#AAFFFFFF"
+# Drop shadow under the bar
+shadow = "#80000000"
+
+[toggle]
+# Drop shadow under toggle pills
+shadow = "#80000000"
+# Edit toggle icon color
+edit = "#adc6ff"
+# Temp toggle icon color
+temp = "#bfc6dc"
+
+[share]
+# Icon color when device is reachable
+connected = "#adc6ff"
+# Icon color while checking connectivity
+pending = "#8a8f99"
+# Icon color on connection failure
+errorIcon = "white"
+# Background color on connection failure
+errorBackground = "#ffb4ab"
+
+[hooks]
+# Command to run after a screenshot is saved (leave empty to disable)
+# Placeholders: %f = full path, %n = filename, %d = directory, %t = timestamp
+postSaveHook = ""

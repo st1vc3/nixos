@@ -1,0 +1,10 @@
+/* Default palette, used until scripts/misc/wallpaper-picker runs matugen for
+   the first time (see home/stivce.nix's seedMatugenDefaults activation).
+   Matches hyprlock-colors.conf's accent. Regenerated file lives at the same
+   path afterward and is no longer touched by home-manager. */
+@define-color surface                rgb(17, 19, 24);
+@define-color surface_container      #1a1b21;
+@define-color surface_container_high #282a2f;
+@define-color on_surface             #e2e2e9;
+@define-color outline_variant        rgb(69, 71, 79);
+@define-color primary                #adc6ff;

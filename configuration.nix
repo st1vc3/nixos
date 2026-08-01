@@ -12,7 +12,6 @@
     ./home
   ];
 
-
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -25,6 +24,7 @@
     dates = "weekly";
     options = "--delete-older-than 14d";
   };
+  nix.settings.auto-optimise-store = true;
 
   networking.hostName = "nixos";
   networking.networkmanager.enable = true;

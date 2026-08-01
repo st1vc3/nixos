@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, autoPatchelfHook, gzip, zlib }:
+{ stdenv, lib, fetchurl, autoPatchelfHook, gzip, zlib }:
 
 stdenv.mkDerivation rec {
   pname = "cursebreaker";
@@ -23,6 +23,8 @@ stdenv.mkDerivation rec {
   meta = {
     description = "CLI addon manager for World of Warcraft";
     homepage = "https://github.com/AcidWeb/CurseBreaker";
+    license = lib.licenses.gpl3Only;
+    platforms = [ "x86_64-linux" ];
     mainProgram = "cursebreaker";
   };
 }

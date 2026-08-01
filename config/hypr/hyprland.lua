@@ -306,7 +306,7 @@ local mainMod = "SUPER" -- Sets "Windows" key as main modifier
 hl.bind(mainMod .. " + RETURN", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + SHIFT + RETURN", hl.dsp.exec_cmd(terminal .. " herdr"))
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
-hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
+hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd(menu))
@@ -321,6 +321,7 @@ hl.bind("ALT + SHIFT + 3", hl.dsp.exec_cmd("$HOME/.local/bin/misc/screenshot-reg
 hl.bind("ALT + SHIFT + 4", hl.dsp.exec_cmd("$HOME/.local/bin/misc/screenshot-region"))
 hl.bind(mainMod .. " + SHIFT + Q",  hl.dsp.exec_cmd("$HOME/.config/hypr/start-hyprlock"))
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd("$HOME/Scripts/set-wallpaper.sh"))
+hl.bind(mainMod .. " + SHIFT + F1", hl.dsp.exec_cmd("$HOME/.local/bin/misc/wallpaper-picker"))
 
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))

@@ -24,6 +24,11 @@
       url = "github:uiriansan/SilentSDDM";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    hyprquickframe = {
+      url = "github:Ronin-CK/HyprQuickFrame";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

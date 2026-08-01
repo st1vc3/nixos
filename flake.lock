@@ -41,6 +41,26 @@
         "type": "github"
       }
     },
+    "hyprquickframe": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780319201,
+        "narHash": "sha256-Xkg1tj1XLEnURikdmfpH9jBOTC5/g6bksvbTRJbZmoE=",
+        "owner": "Ronin-CK",
+        "repo": "HyprQuickFrame",
+        "rev": "57f0629b4af9740c704e5f315f9aafe487952095",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Ronin-CK",
+        "repo": "HyprQuickFrame",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1785386831,
@@ -77,6 +97,7 @@
       "inputs": {
         "disko": "disko",
         "home-manager": "home-manager",
+        "hyprquickframe": "hyprquickframe",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "silentSDDM": "silentSDDM",
