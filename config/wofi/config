@@ -1,0 +1,10 @@
+width=600
+height=400
+location=center
+orientation=vertical
+halign=fill
+allow_markup=false
+no_actions=true
+insensitive=true
+allow_images=false
+hide_scroll=true
