@@ -388,7 +388,10 @@ for name, ns in pairs({
     ["blur-swaync-notifications"]  = "swaync-notification-window",
     ["blur-swaync-control-center"] = "swaync-control-center",
 }) do
-    pcall(hl.layer_rule, { name = name, match = { namespace = ns }, blur = true, ignore_alpha = 0.0 })
+    -- 0.5, not 0.0: at 0.0 nothing is ignored, so the layer's fully
+    -- transparent margins around the popup get blurred too, leaving a faint
+    -- rectangular halo. The 0.8-alpha glass body stays well above 0.5.
+    pcall(hl.layer_rule, { name = name, match = { namespace = ns }, blur = true, ignore_alpha = 0.5 })
 end
 
 -- Hyprland's own layersIn fade animation applies to every new layer-shell
