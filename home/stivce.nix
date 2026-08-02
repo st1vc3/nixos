@@ -1,58 +1,68 @@
-{ inputs, pkgs, lib, ... }:
+{
+  inputs,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
-  home.username = "stivce";
-  home.homeDirectory = "/home/stivce";
-  home.stateVersion = "26.05";
-  home.file."Pictures/wallpapers".source = inputs.wallpapers;
+  home = {
+    username = "stivce";
+    homeDirectory = "/home/stivce";
+    stateVersion = "26.05";
 
-  home.file.".zshenv".text = ''
-    export ZDOTDIR="$HOME/.config/zsh"
-  '';
+    file = {
+      "Pictures/wallpapers".source = inputs.wallpapers;
 
-  home.file."Scripts/set-wallpaper.sh" = {
-    source = ../scripts/set-wallpaper.sh;
-    executable = true;
-  };
+      ".zshenv".text = ''
+        export ZDOTDIR="$HOME/.config/zsh"
+      '';
 
-  # Paths below must match what config/hypr/hyprland.lua binds to.
-  home.file.".local/bin/wofi-menu/powermenu" = {
-    source = ../scripts/wofi-menu/powermenu;
-    executable = true;
-  };
-  home.file.".local/bin/misc/screenshot-region" = {
-    source = ../scripts/misc/screenshot-region;
-    executable = true;
-  };
-  home.file.".local/bin/misc/screenshot-region-save" = {
-    source = ../scripts/misc/screenshot-region-save;
-    executable = true;
-  };
-  home.file.".local/bin/misc/wallpaper-picker" = {
-    source = ../scripts/misc/wallpaper-picker;
-    executable = true;
-  };
+      "Scripts/set-wallpaper.sh" = {
+        source = ../scripts/set-wallpaper.sh;
+        executable = true;
+      };
 
-  home.file.".claude/CLAUDE.md".source = ../config/AGENTS.md;
+      # Paths below must match what config/hypr/hyprland.lua binds to.
+      ".local/bin/wofi-menu/powermenu" = {
+        source = ../scripts/wofi-menu/powermenu;
+        executable = true;
+      };
+      ".local/bin/misc/screenshot-region" = {
+        source = ../scripts/misc/screenshot-region;
+        executable = true;
+      };
+      ".local/bin/misc/screenshot-region-save" = {
+        source = ../scripts/misc/screenshot-region-save;
+        executable = true;
+      };
+      ".local/bin/misc/wallpaper-picker" = {
+        source = ../scripts/misc/wallpaper-picker;
+        executable = true;
+      };
 
-  # matugen writes hyprlock/kitty/waybar/wofi/swaync colors straight to these paths
-  # at runtime (scripts/set-wallpaper.sh), so home-manager can't manage them
-  # as symlinks - it would either fail to write through a read-only Nix
-  # store target, or fight matugen for ownership on every rebuild. Instead
-  # seed each one from its checked-in default exactly once; after that,
-  # matugen (or its absence, if you never run the picker) fully owns them.
-  home.activation.seedMatugenDefaults = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    seed() {
-      if [[ ! -e "$1" ]]; then
-        $DRY_RUN_CMD install $VERBOSE_ARG -Dm644 "$2" "$1"
-      fi
-    }
-    seed "$HOME/.config/hypr/hyprlock-colors.conf" "${../config/matugen/defaults/hyprlock-colors.conf}"
-    seed "$HOME/.config/kitty/colors.conf" "${../config/matugen/defaults/kitty-colors.conf}"
-    seed "$HOME/.config/waybar/colors.css" "${../config/matugen/defaults/waybar-colors.css}"
-    seed "$HOME/.config/wofi/colors.css" "${../config/matugen/defaults/wofi-colors.css}"
-    seed "$HOME/.config/swaync/colors.css" "${../config/matugen/defaults/swaync-colors.css}"
-  '';
+      ".claude/CLAUDE.md".source = ../config/AGENTS.md;
+    };
+
+    # matugen writes hyprlock/kitty/waybar/wofi/swaync colors straight to these paths
+    # at runtime (scripts/set-wallpaper.sh), so home-manager can't manage them
+    # as symlinks - it would either fail to write through a read-only Nix
+    # store target, or fight matugen for ownership on every rebuild. Instead
+    # seed each one from its checked-in default exactly once; after that,
+    # matugen (or its absence, if you never run the picker) fully owns them.
+    activation.seedMatugenDefaults = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      seed() {
+        if [[ ! -e "$1" ]]; then
+          $DRY_RUN_CMD install $VERBOSE_ARG -Dm644 "$2" "$1"
+        fi
+      }
+      seed "$HOME/.config/hypr/hyprlock-colors.conf" "${../config/matugen/defaults/hyprlock-colors.conf}"
+      seed "$HOME/.config/kitty/colors.conf" "${../config/matugen/defaults/kitty-colors.conf}"
+      seed "$HOME/.config/waybar/colors.css" "${../config/matugen/defaults/waybar-colors.css}"
+      seed "$HOME/.config/wofi/colors.css" "${../config/matugen/defaults/wofi-colors.css}"
+      seed "$HOME/.config/swaync/colors.css" "${../config/matugen/defaults/swaync-colors.css}"
+    '';
+  };
 
   xdg.configFile = {
     "kitty" = {
