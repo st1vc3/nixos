@@ -214,6 +214,12 @@ hl.config({
     },
 })
 
+hl.config({
+    ecosystem = {
+        no_update_news = true,
+    },
+})
+
 -- NVIDIA: hardware cursors glitch on nvidia-drm
 hl.config({
     cursor = {
