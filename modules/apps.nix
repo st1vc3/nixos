@@ -2,7 +2,6 @@
 
 let
   unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
-  cursebreaker = pkgs.callPackage ../pkgs/cursebreaker.nix { };
   hyprquickframe = inputs.hyprquickframe.packages.${pkgs.system}.default;
 in
 {
@@ -48,19 +47,10 @@ in
     psmisc
     volantes-cursors
     kdePackages.qt6ct
-    prismlauncher
     discord
     telegram-desktop
     whatsapp-electron
-    virt-manager
-    lutris
-    winetricks
-    cursebreaker
   ];
 
   programs.firefox.enable = true;
-  programs.steam.enable = true;
-  programs.gamemode.enable = true;
-
-  virtualisation.libvirtd.enable = true;
 }

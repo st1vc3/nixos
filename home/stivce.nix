@@ -15,9 +15,7 @@
     executable = true;
   };
 
-  # Power menu (SUPER+ESCAPE) and region-screenshot bindings (ALT+SHIFT+3/4),
-  # ported from github.com/stivce/arch.dot to the ~/.local/bin layout that
-  # config/hypr/hyprland.lua already expects.
+  # Paths below must match what config/hypr/hyprland.lua binds to.
   home.file.".local/bin/wofi-menu/powermenu" = {
     source = ../scripts/wofi-menu/powermenu;
     executable = true;

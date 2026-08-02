@@ -38,7 +38,8 @@ My NixOS installation, configured declaratively with [flakes](https://nixos.wiki
 | `modules/nvidia.nix` | CPU microcode + NVIDIA graphics + GPU env |
 | `modules/desktop.nix` | Hyprland, SDDM + SilentSDDM theme, portals, lock, fonts |
 | `modules/audio.nix` | PipeWire |
-| `modules/apps.nix` | System packages + Firefox + Starship |
+| `modules/apps.nix` | CLI tools, Hyprland desktop packages, chat apps + Firefox |
+| `modules/gaming.nix` | Steam, gamemode, Lutris, PrismLauncher, virt-manager/libvirtd, cursebreaker |
 | `home/default.nix` | home-manager wiring |
 | `home/stivce.nix` | Per-user `$HOME` files (hypr, waybar, scripts, wallpaper) |
 | `config/hypr/`, `config/waybar/`, `config/wofi/`, `config/swaync/`, `config/kitty/`, `config/nvim/`, `config/herdr/`, `config/zsh/`, `config/hyprquickframe/` | Configs deployed to `~/.config/` |
