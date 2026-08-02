@@ -3,7 +3,7 @@
    Matches hyprlock-colors.conf's accent. Regenerated file lives at the same
    path afterward and is no longer touched by home-manager.
    The control center keeps kitty's recipe (surface + 0.8 + blur); the
-   notification fill is a light 0.1 tint so the blurred wallpaper dominates. */
+   notification fill is a near-invisible 0.05 tint - pure blur. */
 :root {
   --cc-bg: rgba(17, 19, 24, 0.8);
   --noti-border-color: rgba(69, 71, 79, 0.3);
@@ -17,7 +17,7 @@
 
 @define-color cc-bg rgba(17, 19, 24, 0.8);
 @define-color noti-border-color rgba(69, 71, 79, 0.3);
-@define-color noti-bg rgba(17, 19, 24, 0.1);
+@define-color noti-bg rgba(17, 19, 24, 0.05);
 @define-color noti-bg-opaque rgb(26, 27, 33);
 @define-color noti-bg-darker rgba(17, 19, 24, 0.3);
 @define-color noti-bg-hover rgba(40, 42, 47, 0.4);

@@ -87,9 +87,10 @@ if command -v matugen >/dev/null 2>&1; then
       [ -S "$sock" ] || continue
       kitten @ --to "unix:$sock" set-colors --all -- "$HOME/.config/kitty/colors.conf" >/dev/null 2>&1 || true
     done
-    if pgrep -x waybar >/dev/null 2>&1; then
-      pkill -SIGUSR2 waybar
-    fi
+    # No -x: nix wraps the binary, so the process name is ".waybar-wrapped"
+    # and an exact match on "waybar" never fires - the bar silently kept
+    # its old palette on every wallpaper switch.
+    pkill -SIGUSR2 waybar 2>/dev/null || true
     if pgrep -x swaync >/dev/null 2>&1; then
       swaync-client --reload-css >/dev/null 2>&1 || true
     fi
