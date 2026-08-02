@@ -1,5 +1,6 @@
 {
   inputs,
+  config,
   pkgs,
   lib,
   ...
@@ -69,10 +70,12 @@
       source = ../config/kitty;
       recursive = true;
     };
-    "nvim" = {
-      source = ../config/nvim;
-      recursive = true;
-    };
+    # lazy.nvim rewrites lazy-lock.json next to init.lua on every install/
+    # update, which fails if the config is store-symlinked (read-only). Link
+    # the whole dir to the repo checkout instead (INSTALL.md pins it at
+    # ~/nixos), so the lockfile stays writable and changes land in git.
+    "nvim".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nixos/config/nvim";
     "herdr" = {
       source = ../config/herdr;
       recursive = true;
