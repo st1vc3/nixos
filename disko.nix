@@ -11,7 +11,7 @@
               priority = 1;
               name = "ESP";
               size = "1G";
-              type = "EF00"; # EFI System Partition
+              type = "EF00";
               content = {
                 type = "filesystem";
                 format = "vfat";

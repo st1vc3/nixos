@@ -9,6 +9,7 @@
     ./modules/desktop.nix
     ./modules/audio.nix
     ./modules/apps.nix
+    ./modules/gaming.nix
     ./home
   ];
 
