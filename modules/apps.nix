@@ -3,6 +3,8 @@
 let
   unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
   hyprquickframe = inputs.hyprquickframe.packages.${pkgs.system}.default;
+  zen-browser = inputs.zen-browser.packages.${pkgs.system}.default;
+  helium = inputs.helium.packages.${pkgs.system}.helium;
 in
 {
   environment.systemPackages = with pkgs; [
@@ -50,6 +52,8 @@ in
     discord
     telegram-desktop
     whatsapp-electron
+    zen-browser
+    helium
   ];
 
   programs.firefox.enable = true;
