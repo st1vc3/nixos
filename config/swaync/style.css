@@ -29,7 +29,8 @@ notificationwindow, blankwindow {
 }
 
 .control-center {
-  background-color: rgba(18, 19, 24, 0.3);
+  /* @define-color, not var(): see the .notification background note. */
+  background-color: @cc-bg;
   color: var(--text-color);
   border-radius: var(--border-radius);
   border: var(--border);
@@ -108,7 +109,13 @@ notificationwindow, blankwindow {
   border: var(--border);
   padding: 0;
   transition: var(--hover-transition);
-  background: rgba(var(--noti-bg), 0.3);
+  /* Same recipe as kitty: surface color at 0.8 over Hyprland blur (the
+     blur-swaync-* layer rules in hyprland.lua), so notifications read as
+     the same translucent dark glass as terminal windows. Must be a
+     @define-color reference: GTK's CSS parser silently drops
+     rgba(var(--triplet), a) composition, which left the background fully
+     transparent (verified live on swaync 0.12.6 / GTK4). */
+  background: @noti-bg;
 }
 
 .notification-row .notification-background .notification .notification-default-action {
