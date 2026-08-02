@@ -29,6 +29,19 @@
       url = "github:Ronin-CK/HyprQuickFrame";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Neither browser is in nixpkgs yet (Zen is stuck on Firefox-fork
+    # packaging issues, Helium's PR has been pending for a while), so both
+    # come from community flakes that repackage the official binaries.
+    zen-browser = {
+      url = "github:0xc000022070/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    helium = {
+      url = "github:oxcl/nix-flake-helium-browser";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
