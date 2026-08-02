@@ -32,7 +32,7 @@
   };
 
   outputs =
-    { self, nixpkgs, disko, ... }@inputs:
+    { nixpkgs, disko, ... }@inputs:
     {
       nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
@@ -41,6 +41,11 @@
           disko.nixosModules.disko
           ./configuration.nix
         ];
+      };
+
+      formatter = {
+        x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt;
+        aarch64-darwin = nixpkgs.legacyPackages.aarch64-darwin.nixfmt;
       };
     };
 }

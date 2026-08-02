@@ -1,4 +1,11 @@
-{ stdenv, lib, fetchurl, autoPatchelfHook, gzip, zlib }:
+{
+  stdenv,
+  lib,
+  fetchurl,
+  autoPatchelfHook,
+  gzip,
+  zlib,
+}:
 
 stdenv.mkDerivation rec {
   pname = "cursebreaker";
@@ -10,7 +17,10 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [ autoPatchelfHook ];
-  buildInputs = [ stdenv.cc.cc.lib zlib ];
+  buildInputs = [
+    stdenv.cc.cc.lib
+    zlib
+  ];
 
   dontUnpack = true;
 

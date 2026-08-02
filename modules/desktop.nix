@@ -3,39 +3,44 @@
 {
   imports = [ inputs.silentSDDM.nixosModules.default ];
 
-  programs.hyprland.enable = true;
-  programs.hyprland.withUWSM = true;
+  programs = {
+    hyprland = {
+      enable = true;
+      withUWSM = true;
+    };
+    hyprlock.enable = true;
+    dconf.enable = true;
+
+    silentSDDM = {
+      enable = true;
+      theme = "catppuccin-mocha";
+      # Match the real desktop background instead of the theme's own default.
+      # SDDM runs as its own system user before login, so it can't read
+      # ~/Pictures/wallpapers (mode 0700) - copy the same file in at build time.
+      backgrounds.wallpaper = "${inputs.wallpapers}/abstract/red.jpg";
+      # SilentSDDM shows its own idle "lock screen" (clock + "press any key")
+      # before the actual login form - two independent sections, each with
+      # their own background/use-background-color, so both need setting or
+      # you only see the real wallpaper after the first keypress.
+      settings."LoginScreen" = {
+        background = "red.jpg";
+        # The theme's own default sets this true (solid background-color
+        # fill), which silently wins over `background` since overrides are
+        # appended as a second [LoginScreen] section, not a replacement -
+        # without this, the image is copied in but never actually shown.
+        "use-background-color" = false;
+      };
+      settings."LockScreen" = {
+        background = "red.jpg";
+        "use-background-color" = false;
+      };
+    };
+  };
+
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = true;
   };
-
-  programs.silentSDDM = {
-    enable = true;
-    theme = "catppuccin-mocha";
-    # Match the real desktop background instead of the theme's own default.
-    # SDDM runs as its own system user before login, so it can't read
-    # ~/Pictures/wallpapers (mode 0700) - copy the same file in at build time.
-    backgrounds.wallpaper = "${inputs.wallpapers}/abstract/red.jpg";
-    # SilentSDDM shows its own idle "lock screen" (clock + "press any key")
-    # before the actual login form - two independent sections, each with
-    # their own background/use-background-color, so both need setting or
-    # you only see the real wallpaper after the first keypress.
-    settings."LoginScreen" = {
-      background = "red.jpg";
-      # The theme's own default sets this true (solid background-color
-      # fill), which silently wins over `background` since overrides are
-      # appended as a second [LoginScreen] section, not a replacement -
-      # without this, the image is copied in but never actually shown.
-      "use-background-color" = false;
-    };
-    settings."LockScreen" = {
-      background = "red.jpg";
-      "use-background-color" = false;
-    };
-  };
-
-  programs.hyprlock.enable = true;
 
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
@@ -47,7 +52,6 @@
   };
 
   security.polkit.enable = true;
-  programs.dconf.enable = true;
   services.gvfs.enable = true;
 
   fonts.packages = with pkgs; [

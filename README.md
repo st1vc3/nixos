@@ -94,6 +94,20 @@ nix flake update            # or: nix flake update wallpapers
 sudo nixos-rebuild switch --flake ~/nixos#nixos
 ```
 
+## Formatting and linting
+
+`nix fmt` (wired to `nixfmt`, the RFC 166 formatter) enforces consistent
+style. Run it before committing:
+
+```bash
+nix fmt
+```
+
+`nix flake check` validates that the flake still evaluates. For deeper
+style/dead-code checks, run `statix check .` and `deadnix .`
+(`nix run nixpkgs#statix -- check .` / `nix run nixpkgs#deadnix -- .` if not
+installed).
+
 ## Notes
 
 - **NVIDIA hybrid gotcha:** do **not** set `GBM_BACKEND` or `AQ_DRM_DEVICES` in
