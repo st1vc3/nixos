@@ -8,8 +8,10 @@
    and GTK silently drops the declaration, leaving notifications fully
    transparent. (Also: matugen resolves double-brace placeholders even inside
    CSS comments, so never write one literally here.)
-   The 0.8-alpha surface tokens deliberately mirror kitty (surface color +
-   background_opacity 0.8 + blur) so the shell surfaces look identical. */
+   The control center keeps kitty's recipe (surface + 0.8 + blur); the
+   notification fill is a light 0.1 tint so the blurred wallpaper dominates.
+   It must stay above hyprland.lua's ignore_alpha threshold or the blur
+   skips the glass body entirely. */
 :root {
   --cc-bg: rgba({{colors.surface.dark.red}}, {{colors.surface.dark.green}}, {{colors.surface.dark.blue}}, 0.8);
   --noti-border-color: rgba({{colors.outline_variant.dark.red}}, {{colors.outline_variant.dark.green}}, {{colors.outline_variant.dark.blue}}, 0.3);
@@ -23,7 +25,7 @@
 
 @define-color cc-bg rgba({{colors.surface.dark.red}}, {{colors.surface.dark.green}}, {{colors.surface.dark.blue}}, 0.8);
 @define-color noti-border-color rgba({{colors.outline_variant.dark.red}}, {{colors.outline_variant.dark.green}}, {{colors.outline_variant.dark.blue}}, 0.3);
-@define-color noti-bg rgba({{colors.surface.dark.red}}, {{colors.surface.dark.green}}, {{colors.surface.dark.blue}}, 0.8);
+@define-color noti-bg rgba({{colors.surface.dark.red}}, {{colors.surface.dark.green}}, {{colors.surface.dark.blue}}, 0.1);
 @define-color noti-bg-opaque {{colors.surface_container.dark.rgb}};
 @define-color noti-bg-darker rgba({{colors.surface.dark.red}}, {{colors.surface.dark.green}}, {{colors.surface.dark.blue}}, 0.3);
 @define-color noti-bg-hover rgba({{colors.surface_container_high.dark.red}}, {{colors.surface_container_high.dark.green}}, {{colors.surface_container_high.dark.blue}}, 0.4);

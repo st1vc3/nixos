@@ -2,8 +2,8 @@
    the first time (see home/stivce.nix's seedMatugenDefaults activation).
    Matches hyprlock-colors.conf's accent. Regenerated file lives at the same
    path afterward and is no longer touched by home-manager.
-   Surface tokens use 0.8 alpha to mirror kitty (surface color +
-   background_opacity 0.8 + blur) so the shell surfaces look identical. */
+   The control center keeps kitty's recipe (surface + 0.8 + blur); the
+   notification fill is a light 0.1 tint so the blurred wallpaper dominates. */
 :root {
   --cc-bg: rgba(17, 19, 24, 0.8);
   --noti-border-color: rgba(69, 71, 79, 0.3);
@@ -17,7 +17,7 @@
 
 @define-color cc-bg rgba(17, 19, 24, 0.8);
 @define-color noti-border-color rgba(69, 71, 79, 0.3);
-@define-color noti-bg rgba(17, 19, 24, 0.8);
+@define-color noti-bg rgba(17, 19, 24, 0.1);
 @define-color noti-bg-opaque rgb(26, 27, 33);
 @define-color noti-bg-darker rgba(17, 19, 24, 0.3);
 @define-color noti-bg-hover rgba(40, 42, 47, 0.4);
