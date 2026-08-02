@@ -388,10 +388,14 @@ for name, ns in pairs({
     ["blur-swaync-notifications"]  = "swaync-notification-window",
     ["blur-swaync-control-center"] = "swaync-control-center",
 }) do
-    -- 0.5, not 0.0: at 0.0 nothing is ignored, so the layer's fully
+    -- 0.05, not 0.0: at 0.0 nothing is ignored, so the layer's fully
     -- transparent margins around the popup get blurred too, leaving a faint
-    -- rectangular halo. The 0.8-alpha glass body stays well above 0.5.
-    pcall(hl.layer_rule, { name = name, match = { namespace = ns }, blur = true, ignore_alpha = 0.5 })
+    -- rectangular halo. Must stay below the notification fill's 0.1 alpha
+    -- (swaync-colors.css) or the blur skips the glass body entirely.
+    -- xray: sample the wallpaper, not whatever window happens to be under
+    -- the popup - over a dark kitty window the glass otherwise reads as a
+    -- solid black box, while kitty itself always blurs the wallpaper.
+    pcall(hl.layer_rule, { name = name, match = { namespace = ns }, blur = true, ignore_alpha = 0.05, xray = true })
 end
 
 -- Hyprland's own layersIn fade animation applies to every new layer-shell

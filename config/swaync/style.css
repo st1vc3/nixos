@@ -109,9 +109,9 @@ notificationwindow, blankwindow {
   border: var(--border);
   padding: 0;
   transition: var(--hover-transition);
-  /* Same recipe as kitty: surface color at 0.8 over Hyprland blur (the
-     blur-swaync-* layer rules in hyprland.lua), so notifications read as
-     the same translucent dark glass as terminal windows. Must be a
+  /* Light surface tint over Hyprland blur (the blur-swaync-* layer rules
+     in hyprland.lua, xray'd to the wallpaper), so notifications read as
+     frosted glass; the alpha lives in swaync-colors.css. Must be a
      @define-color reference: GTK's CSS parser silently drops
      rgba(var(--triplet), a) composition, which left the background fully
      transparent (verified live on swaync 0.12.6 / GTK4). */
