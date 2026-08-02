@@ -77,11 +77,16 @@ awww img -t none "$WALLPAPER"
 # setting above, or skip reloading kitty/waybar for every other wallpaper.
 if command -v matugen >/dev/null 2>&1; then
   if matugen image "$WALLPAPER" --source-color-index 0; then
-    # `pgrep && pkill` at top level would trip `set -e` when the process
-    # isn't running (pgrep's exit 1 isn't shielded there), so use `if`.
-    if pgrep -x kitty >/dev/null 2>&1; then
-      pkill -USR1 kitty
-    fi
+    # A config reload (SIGUSR1 or otherwise) only affects text kitty prints
+    # after the reload - it does NOT repaint content already on screen
+    # (verified directly: an already-printed colored string stayed the old
+    # color after SIGUSR1, but updated instantly via remote control). Each
+    # `kitty` launch is normally its own process, hence one socket per PID
+    # (see kitty.conf's listen_on) - broadcast to all of them.
+    for sock in /tmp/kitty-*; do
+      [ -S "$sock" ] || continue
+      kitten @ --to "unix:$sock" set-colors --all -- "$HOME/.config/kitty/colors.conf" >/dev/null 2>&1 || true
+    done
     if pgrep -x waybar >/dev/null 2>&1; then
       pkill -SIGUSR2 waybar
     fi
