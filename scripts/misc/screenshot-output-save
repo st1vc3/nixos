@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Alt+Shift+3: save the focused monitor to ~/Pictures/Screenshots.
+set -euo pipefail
+
+for command in grim hyprctl jq notify-send; do
+  if ! command -v "$command" >/dev/null 2>&1; then
+    printf 'screenshot-output-save: required command is missing: %s\n' "$command" >&2
+    exit 1
+  fi
+done
+
+output="$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .name' | head -n 1)"
+if [ -z "$output" ] || [ "$output" = "null" ]; then
+  notify-send -u critical "Screenshot failed" "Hyprland did not report a focused monitor"
+  exit 1
+fi
+
+screenshot_dir="$HOME/Pictures/Screenshots"
+if [ ! -d "$screenshot_dir" ]; then
+  notify-send -u critical "Screenshot failed" "Screenshot directory does not exist"
+  exit 1
+fi
+
+timestamp="$(date '+%Y-%m-%d_%H-%M-%S_%N')"
+screenshot="$screenshot_dir/screenshot_${timestamp}.png"
+
+if ! grim -o "$output" "$screenshot" || [ ! -s "$screenshot" ]; then
+  rm -f -- "$screenshot"
+  notify-send -u critical "Screenshot failed" "Could not save the focused monitor"
+  exit 1
+fi
+
+notify-send "Screenshot saved" "$screenshot"
