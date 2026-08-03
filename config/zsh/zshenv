@@ -16,7 +16,9 @@ elif command -v batcat >/dev/null 2>&1; then
 fi
 
 # ---------- GPG ----------
-export GPG_TTY=$(tty)
+if [[ -o interactive ]] && [[ -t 0 ]]; then
+  export GPG_TTY="$(tty 2>/dev/null)"
+fi
 
 # ---------- Starship ----------
 export STARSHIP_CONFIG="$ZDOTDIR/starship.toml"

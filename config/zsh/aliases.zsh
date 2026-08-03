@@ -42,7 +42,28 @@ alias gd="git diff"
 # NIX
 # =========================================================
 
-alias rebuild="sudo nixos-rebuild switch --flake ~/nixos#nixos"
+rebuild() {
+  sudo nixos-rebuild switch --flake "$HOME/nixos#nixos" || return
+  # Package ownership can move commands between /run/current-system and the
+  # Home Manager profile. Drop Zsh's cached absolute command paths afterward.
+  rehash
+}
+
+# Activate a candidate without changing the boot default. Rebooting returns to
+# the most recent `rebuild` generation if the candidate is unusable.
+rebuild_test() {
+  sudo nixos-rebuild test --flake "$HOME/nixos#nixos" || return
+  rehash
+}
+
+generations() {
+  nixos-rebuild list-generations
+}
+
+rollback_system() {
+  sudo nixos-rebuild switch --rollback || return
+  rehash
+}
 
 # =========================================================
 # misc
@@ -51,3 +72,4 @@ alias rebuild="sudo nixos-rebuild switch --flake ~/nixos#nixos"
 alias ff="clear && fastfetch"
 alias c="clear"
 alias stream='mpv av://v4l2:/dev/video4 --fullscreen --demuxer-lavf-o=input_format=mjpeg,framerate=60 --profile=low-latency --untimed'
+alias addon="~/Games/battlenet/drive_c/Program\ Files\ \(x86\)/World\ of\ Warcraft/_retail_/CurseBreaker"
