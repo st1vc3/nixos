@@ -1,60 +1,15 @@
-{ pkgs, inputs, ... }:
-
-let
-  unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system};
-  hyprquickframe = inputs.hyprquickframe.packages.${pkgs.system}.default;
-  zen-browser = inputs.zen-browser.packages.${pkgs.system}.default;
-  helium = inputs.helium.packages.${pkgs.system}.helium;
-in
+{ pkgs, ... }:
 {
+  # GNOME Calendar depends on Evolution Data Server for its calendar sources,
+  # timezone data and user-session DBus activation files. Installing the app
+  # package alone leaves org.gnome.evolution.dataserver.Sources5 unavailable.
+  services.gnome.evolution-data-server.enable = true;
+
   environment.systemPackages = with pkgs; [
-    claude-code
-    unstable.herdr
     git
-    neovim
     wget
     curl
     jq
-    fzf
-    fd
-    zoxide
-    eza
-    bat
-    ripgrep
-    mpv
-    starship
-    fastfetch
-    libnotify
-    imagemagick
-    playerctl
-    brightnessctl
-    kitty
-    zed-editor
-    waybar
-    wofi
-    awww
-    matugen
-    swaynotificationcenter
-    hypridle
-    hyprpolkitagent
-    hyprshot
-    hyprshutdown
-    hyprquickframe
-    hyprland-qtutils
-    grim
-    slurp
-    wl-clipboard
-    nautilus
-    pavucontrol
     psmisc
-    volantes-cursors
-    kdePackages.qt6ct
-    discord
-    telegram-desktop
-    whatsapp-electron
-    zen-browser
-    helium
   ];
-
-  programs.firefox.enable = true;
 }
