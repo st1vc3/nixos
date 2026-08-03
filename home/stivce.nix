@@ -45,7 +45,9 @@
         source = ../scripts/misc/screenshot-output-save;
         executable = true;
       };
-      ".claude/CLAUDE.md".source = ../config/AGENTS.md;
+      # Keep Claude Code and Codex aligned from one declarative source.
+      ".claude/CLAUDE.md".source = ../config/agents/shared.md;
+      ".codex/AGENTS.md".source = ../config/agents/shared.md;
     };
 
     # Matugen writes Hyprlock and Kitty colors straight to these paths at
