@@ -42,13 +42,28 @@ setopt NUMERIC_GLOB_SORT  # sort file10 after file9, not after file1
 # Smart directory navigation
 # =========================================================
 
-eval "$(zoxide init zsh)"
+if (( $+commands[zoxide] )); then
+  eval "$(zoxide init zsh)"
+fi
 
 # =========================================================
 # Completion
 # =========================================================
 
-autoload -Uz compinit
+autoload -Uz compinit compaudit
+
+# Ignore completion directories with unsafe ownership or permissions. The
+# compiled completion dump remains cached under XDG_CACHE_HOME.
+typeset -a insecure_completion_dirs
+typeset insecure_completion_output
+insecure_completion_output="$(compaudit)"
+if [[ -n "$insecure_completion_output" ]]; then
+  insecure_completion_dirs=("${(@f)insecure_completion_output}")
+  print -u2 "Ignoring insecure completion directories:"
+  printf '  %s\n' "${insecure_completion_dirs[@]}" >&2
+  fpath=("${(@)fpath:|insecure_completion_dirs}")
+fi
+unset insecure_completion_output
 compinit -d "$XDG_CACHE_HOME/zsh/zcompdump"
 zstyle ':completion:*' menu select
 
@@ -62,7 +77,7 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 # Distro-agnostic fzf shell integration (fzf >= 0.48). Nix's fzf store path
 # is content-hashed, so there's no fixed filesystem path to source like on
 # other distros.
-if command -v fzf >/dev/null 2>&1; then
+if (( $+commands[fzf] )); then
   source <(fzf --zsh)
 fi
 
