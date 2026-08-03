@@ -13,7 +13,7 @@ My NixOS installation, configured declaratively with [flakes](https://nixos.wiki
 | CPU | AMD (Ryzen, with iGPU) |
 | GPU | NVIDIA RTX 4070 Ti - **open** kernel module (hybrid: iGPU + dGPU, display on NVIDIA) |
 | Firmware | UEFI (systemd-boot) |
-| Filesystem | btrfs (subvolumes `@`, `@home`, `@nix`, `@log`), unencrypted |
+| Filesystem | btrfs (subvolumes `@`, `@home`, `@nix`, `@log`, `@snapshots`), unencrypted |
 | Display | Hyprland (Wayland) + SDDM, monitor at 3840×2160 @ 240 Hz |
 
 ## Inputs
@@ -21,11 +21,13 @@ My NixOS installation, configured declaratively with [flakes](https://nixos.wiki
 | Input | Purpose |
 |---|---|
 | `nixpkgs` | `nixos-26.05` (stable) |
+| `nixpkgs-unstable` | Selected user applications not available on stable |
 | `disko` | Declarative disk partitioning |
 | `home-manager` | `release-26.05` - per-user `$HOME` state |
 | `wallpapers` | [`st1vc3/wallpaper`](https://github.com/st1vc3/wallpaper), pinned (not a flake) |
 | `silentSDDM` | [`uiriansan/SilentSDDM`](https://github.com/uiriansan/SilentSDDM) - SDDM theme |
 | `hyprquickframe` | [`Ronin-CK/HyprQuickFrame`](https://github.com/Ronin-CK/HyprQuickFrame) - region screenshot UI |
+| `zen-browser` / `helium` | Community flakes packaging the two browsers |
 
 ## Layout
 
@@ -35,57 +37,76 @@ My NixOS installation, configured declaratively with [flakes](https://nixos.wiki
 | `configuration.nix` | Thin entry point: boot, network, locale, users + `imports` |
 | `hardware-configuration.nix` | Machine-specific, generated during install |
 | `disko.nix` | Declarative disk layout - **set the target `device` before use** |
-| `modules/nvidia.nix` | CPU microcode + NVIDIA graphics + GPU env |
+| `modules/nvidia.nix` | AMD microcode + NVIDIA graphics and video environment |
 | `modules/desktop.nix` | Hyprland, SDDM + SilentSDDM theme, portals, lock, fonts |
 | `modules/audio.nix` | PipeWire |
-| `modules/apps.nix` | CLI tools, Hyprland desktop packages, chat apps + Firefox |
-| `modules/gaming.nix` | Steam, gamemode, Lutris, PrismLauncher, virt-manager/libvirtd, cursebreaker |
+| `modules/apps.nix` | Small set of system-wide CLI/recovery tools |
+| `modules/gaming.nix` | Steam, GameMode, and libvirt system services |
+| `modules/snapshots.nix` | Snapper schedule and bounded root-snapshot retention |
 | `home/default.nix` | home-manager wiring |
-| `home/stivce.nix` | Per-user `$HOME` files (hypr, waybar, scripts, wallpaper) |
-| `config/hypr/`, `config/waybar/`, `config/wofi/`, `config/swaync/`, `config/kitty/`, `config/nvim/`, `config/herdr/`, `config/zsh/`, `config/hyprquickframe/` | Configs deployed to `~/.config/` |
-| `config/matugen/` | matugen config + templates (inputs to the theme switcher; see below) |
+| `home/stivce.nix` | User identity and shared configuration-file deployment |
+| `home/packages.nix`, `home/services.nix`, `home/theming.nix`, `home/neovim.nix` | Focused user packages, services, toolkit theme, and editor modules |
+| `home/quickshell.nix` | Quickshell option, config deployment, palette seed, and user service |
+| `config/hypr/`, `config/quickshell/`, `config/kitty/`, `config/nvim/`, `config/herdr/`, `config/zsh/`, `config/hyprquickframe/` | Configs deployed to `~/.config/` |
+| `config/matugen/` | Theme templates, startup defaults, and ownership documentation |
+| `config/agents/shared.md` | Shared global instructions deployed to Claude Code and Codex |
 | `scripts/set-wallpaper.sh` | Wallpaper setter (awww) + matugen retheme → `~/Scripts/` |
-| `scripts/wofi-menu/`, `scripts/misc/` | Power menu, region-screenshot, wallpaper-picker scripts → `~/.local/bin/` |
+| `scripts/misc/` | Output and region screenshot helpers → `~/.local/bin/misc/` |
 | `pkgs/cursebreaker.nix` | Custom package: WoW addon manager, not in nixpkgs |
-| `INSTALL.md` | Step-by-step install from the NixOS live ISO |
+| `docs/installation.md` | Step-by-step install from the NixOS live ISO |
+| `docs/snapshots.md` | Snapshot scope, existing-system migration, and routine commands |
+| `docs/rollback.md` | Safe rebuild workflow and system/file recovery procedures |
+| `docs/review/` | Review checklist and implementation history |
 
 ## Desktop
 
-Hyprland (via **UWSM**) with: **waybar** (bar), **wofi** (launcher),
-**swaync** (notifications), **hyprlock**/**hypridle** (lock + idle),
-**hyprpolkitagent** (auth), **awww** (wallpaper), **hyprshot** (full/output
-screenshots), **hyprquickframe** (region screenshots, `ALT+SHIFT+3/4`),
-**hyprshutdown** (graceful compositor exit, `SUPER+M`), **nautilus**,
-**firefox**, **kitty**. Config lives in `config/hypr/`; wallpapers sync from
-the `wallpapers` input to `~/Pictures/wallpapers`. Login screen themed with
-**SilentSDDM** (`catppuccin-mocha`).
+Hyprland runs through **UWSM**. **Quickshell** provides the notch/status shell,
+app launcher, power menu, wallpaper picker, notification popups, and notification
+centre. Supporting services include **hyprlock**/**hypridle**,
+**hyprpolkitagent**, and **awww**. Home Manager ties the Quickshell, Awww,
+wallpaper initialization, idle, and PolicyKit services to the graphical session.
+
+Screenshot bindings are `ALT+SHIFT+3` for the focused output,
+`ALT+SHIFT+4` for an interactive region, and `ALT+SHIFT+5` for
+**HyprQuickFrame**. `SUPER+M` exits through **hyprshutdown** and
+`SUPER+SHIFT+Q` locks the session.
+
+Wallpapers are pinned by the flake and exposed at `~/Pictures/wallpapers`.
+The SDDM login screen uses the same default image through **SilentSDDM** with
+the `catppuccin-mocha` theme.
 
 Reset to the default wallpaper: `~/Scripts/set-wallpaper.sh` or `SUPER+SHIFT+F1`.
 Power menu: `SUPER+ESCAPE`.
 
 ### Theme switcher
 
-`SUPER+F1` opens a wofi picker over everything in `~/Pictures/wallpapers`
-(ported from [`stivce/arch.dot`](https://github.com/stivce/arch.dot)). Picking
-one sets it and runs `matugen image` to regenerate a Material You palette for
-hyprlock, kitty, and the waybar/wofi color partials, then reloads kitty
-(`SIGUSR1`) and waybar (`SIGUSR2`) live. `config/matugen/` holds the templates
-(Nix-managed, edit these); the generated files
-(`~/.config/{hypr/hyprlock-colors.conf,kitty/colors.conf,waybar/colors.css,wofi/colors.css}`)
-are seeded once from `config/matugen/defaults/` on first activation and then
-left alone by home-manager - matugen fully owns them after that, so a
-`nixos-rebuild switch` won't reset a theme you've already picked. swaync and
-GTK/Qt apps aren't themed by this (upstream doesn't template them either).
+`SUPER+F1` opens the native Quickshell picker over everything in
+`~/Pictures/wallpapers`. Picking an image applies it through Awww and runs
+Matugen to regenerate a Material dark palette for Hyprlock, Kitty, Quickshell,
+and Hyprland's accent colors. Kitty instances are updated live through their
+remote-control sockets; Quickshell watches its palette file, and Hyprland is
+reloaded after generation.
+
+The generated files are writable runtime state. Home Manager seeds them once
+from `config/matugen/defaults/`, then leaves them under Matugen's ownership, so
+a rebuild does not reset the selected theme. See
+[`config/matugen/README.md`](config/matugen/README.md) for the complete template
+and ownership lifecycle.
 
 ## Install
 
-See **[INSTALL.md](./INSTALL.md)**.
+See the **[installation guide](docs/installation.md)**.
 
 ## Rebuild after install
 
 ```bash
 sudo nixos-rebuild switch --flake ~/nixos#nixos
 ```
+
+The interactive shell also provides `rebuild_test` for a temporary activation,
+`rebuild` for a permanent switch, `generations` to list recovery points, and
+`rollback_system` for the immediately previous NixOS generation. See
+[`docs/rollback.md`](docs/rollback.md) before relying on Snapper for file recovery.
 
 Update pinned inputs (nixpkgs, home-manager, wallpapers), then rebuild:
 
@@ -113,7 +134,7 @@ installed).
 - **NVIDIA hybrid gotcha:** do **not** set `GBM_BACKEND` or `AQ_DRM_DEVICES` in
   the environment - they crash Hyprland's aquamarine backend on this box. With
   `hardware.nvidia.open = true` + modesetting, the NVIDIA card is auto-selected.
-- **Default login is `stivce` / `changeme`** (`initialPassword` in
-  `configuration.nix`, only applied on first account creation) - change it
-  with `passwd` right after first login. This repo is public and SSH is
-  enabled with password auth, so don't leave it as-is on an untrusted network.
+- **Fresh accounts start locked.** The installation guide sets the `stivce`
+  password interactively before reboot, so no credential is stored in Git.
+  SSH password and root logins are disabled; add an authorized key before
+  expecting remote access.
