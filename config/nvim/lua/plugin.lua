@@ -1,8 +1,4 @@
-local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
-if not vim.uv.fs_stat(lazypath) then
-  vim.fn.system({ 'git', 'clone', '--filter=blob:none',
-    'https://github.com/folke/lazy.nvim.git', '--branch=stable', lazypath })
-end
-vim.opt.rtp:prepend(lazypath)
-require('lazy').setup('plugins')  -- load every file in lua/plugins/
-
+require('plugins.colorscheme')
+require('plugins.git')
+require('plugins.navigation')
+require('plugins.ui')

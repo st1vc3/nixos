@@ -1,24 +1,16 @@
-return {
-  {
-    'stevearc/oil.nvim',
-    opts = { view_options = { show_hidden = true } },
-    keys = { { '<leader>e', '<cmd>Oil<cr>', desc = 'File Browser' } },
-  },
-  {
-    'folke/snacks.nvim',
-    priority = 1000,
-    lazy = false,
-    opts = {
-      picker = { enabled = true },
-      notifier = { enabled = true },
-      input = { enabled = true },
-    },
-    keys = {
-      { '<leader>f', function() Snacks.picker.files() end, desc = 'Find Files' },
-      { '<leader>s', function() Snacks.picker.grep() end,  desc = 'Search Text' },
-      { '<leader>b', function() Snacks.picker.buffers() end, desc = 'Buffers' },
-      { 'gd', function() Snacks.picker.lsp_definitions() end, desc = 'Goto Definition' },
-    },
-  },
-}
+require('oil').setup({
+  view_options = { show_hidden = true },
+})
 
+local snacks = require('snacks')
+snacks.setup({
+  picker = { enabled = true },
+  notifier = { enabled = true },
+  input = { enabled = true },
+})
+
+vim.keymap.set('n', '<leader>e', '<cmd>Oil<cr>', { desc = 'File Browser' })
+vim.keymap.set('n', '<leader>f', function() snacks.picker.files() end, { desc = 'Find Files' })
+vim.keymap.set('n', '<leader>s', function() snacks.picker.grep() end, { desc = 'Search Text' })
+vim.keymap.set('n', '<leader>b', function() snacks.picker.buffers() end, { desc = 'Buffers' })
+vim.keymap.set('n', 'gd', function() snacks.picker.lsp_definitions() end, { desc = 'Goto Definition' })
