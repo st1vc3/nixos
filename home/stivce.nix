@@ -7,6 +7,18 @@
 }:
 
 {
+  imports = [
+    ./neovim.nix
+    ./packages.nix
+    ./quickshell.nix
+    ./services.nix
+    ./theming.nix
+  ];
+
+  # Quickshell desktop shell (notch, notification centre, status widgets).
+  # See home/quickshell.nix for its deployment and service.
+  myShell.enable = true;
+
   home = {
     username = "stivce";
     homeDirectory = "/home/stivce";
@@ -25,28 +37,19 @@
       };
 
       # Paths below must match what config/hypr/hyprland.lua binds to.
-      ".local/bin/wofi-menu/powermenu" = {
-        source = ../scripts/wofi-menu/powermenu;
-        executable = true;
-      };
       ".local/bin/misc/screenshot-region" = {
         source = ../scripts/misc/screenshot-region;
         executable = true;
       };
-      ".local/bin/misc/screenshot-region-save" = {
-        source = ../scripts/misc/screenshot-region-save;
+      ".local/bin/misc/screenshot-output-save" = {
+        source = ../scripts/misc/screenshot-output-save;
         executable = true;
       };
-      ".local/bin/misc/wallpaper-picker" = {
-        source = ../scripts/misc/wallpaper-picker;
-        executable = true;
-      };
-
       ".claude/CLAUDE.md".source = ../config/AGENTS.md;
     };
 
-    # matugen writes hyprlock/kitty/waybar/wofi/swaync colors straight to these paths
-    # at runtime (scripts/set-wallpaper.sh), so home-manager can't manage them
+    # Matugen writes Hyprlock and Kitty colors straight to these paths at
+    # runtime (scripts/set-wallpaper.sh), so Home Manager can't manage them
     # as symlinks - it would either fail to write through a read-only Nix
     # store target, or fight matugen for ownership on every rebuild. Instead
     # seed each one from its checked-in default exactly once; after that,
@@ -59,9 +62,6 @@
       }
       seed "$HOME/.config/hypr/hyprlock-colors.conf" "${../config/matugen/defaults/hyprlock-colors.conf}"
       seed "$HOME/.config/kitty/colors.conf" "${../config/matugen/defaults/kitty-colors.conf}"
-      seed "$HOME/.config/waybar/colors.css" "${../config/matugen/defaults/waybar-colors.css}"
-      seed "$HOME/.config/wofi/colors.css" "${../config/matugen/defaults/wofi-colors.css}"
-      seed "$HOME/.config/swaync/colors.css" "${../config/matugen/defaults/swaync-colors.css}"
     '';
   };
 
@@ -70,19 +70,30 @@
       source = ../config/kitty;
       recursive = true;
     };
-    # lazy.nvim rewrites lazy-lock.json next to init.lua on every install/
-    # update, which fails if the config is store-symlinked (read-only). Link
-    # the whole dir to the repo checkout instead (INSTALL.md pins it at
-    # ~/nixos), so the lockfile stays writable and changes land in git.
-    "nvim".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nixos/config/nvim";
+    # Plugins are supplied by programs.neovim above and pinned by flake.lock;
+    # the configuration is immutable and never downloads code at runtime.
+    "nvim/lua" = {
+      source = ../config/nvim/lua;
+      recursive = true;
+    };
     "herdr" = {
       source = ../config/herdr;
       recursive = true;
     };
     "hyprquickframe/theme.toml".source = ../config/hyprquickframe/theme.toml;
 
-    "matugen/config.toml".source = ../config/matugen/config.toml;
+    # Base config owns the Hyprlock and Kitty mappings. When the shell is
+    # enabled, append its template so Matugen also writes colors.json.
+    # Keeping it conditional means a disabled shell leaves Matugen
+    # generating exactly the original set of colour files.
+    "matugen/config.toml".text =
+      builtins.readFile ../config/matugen/config.toml
+      + lib.optionalString config.myShell.enable ''
+
+        [templates.quickshell-colors]
+        input_path = "~/.config/matugen/templates/quickshell-colors.json"
+        output_path = "~/.config/quickshell/colors.json"
+      '';
     "matugen/templates" = {
       source = ../config/matugen/templates;
       recursive = true;
@@ -114,13 +125,5 @@
       executable = true;
     };
 
-    "waybar/config.jsonc".source = ../config/waybar/config.jsonc;
-    "waybar/style.css".source = ../config/waybar/style.css;
-
-    "swaync/config.json".source = ../config/swaync/config.json;
-    "swaync/style.css".source = ../config/swaync/style.css;
-
-    "wofi/config".source = ../config/wofi/config;
-    "wofi/style.css".source = ../config/wofi/style.css;
   };
 }
