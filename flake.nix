@@ -60,5 +60,9 @@
         x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt;
         aarch64-darwin = nixpkgs.legacyPackages.aarch64-darwin.nixfmt;
       };
+
+      # Expose the Disko CLI from this flake's locked input. Installation docs
+      # can use `nix run .#disko` without resolving an unrelated latest version.
+      packages.x86_64-linux.disko = disko.packages.x86_64-linux.disko;
     };
 }

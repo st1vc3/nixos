@@ -9,6 +9,7 @@
     ./modules/audio.nix
     ./modules/apps.nix
     ./modules/gaming.nix
+    ./modules/snapshots.nix
     ./home
   ];
 
@@ -64,7 +65,9 @@
       "audio"
       "libvirtd"
     ];
-    initialPassword = "changeme";
+    # Keep fresh installations locked until docs/installation.md's interactive passwd
+    # step. This avoids embedding even a temporary credential in a public repo.
+    initialHashedPassword = "!";
     shell = pkgs.zsh;
   };
   programs.zsh.enable = true;
@@ -75,6 +78,15 @@
   };
 
   nixpkgs.config.allowUnfree = true;
-  services.openssh.enable = true;
+  services.openssh = {
+    enable = true;
+    settings = {
+      # Remote access is key-only. Add an authorized key before expecting SSH
+      # access to work.
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "no";
+    };
+  };
   system.stateVersion = "26.05";
 }
