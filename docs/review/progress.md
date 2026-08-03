@@ -91,23 +91,17 @@ CurseBreaker addon alias unchanged.
 
 ## Current state
 
-- The shell changes build successfully as part of the full NixOS closure:
-  `/nix/store/v8kyf62ylrd3g5z8ysg4shdv6wlg1zh7-nixos-system-nixos-26.05.20260730.21ea275`
-- `zsh -n`, interactive Zsh, non-interactive Zsh, interactive Bash,
-  non-interactive Bash, and `git diff --check` passed.
+- The complete configuration builds successfully as
+  `/nix/store/igmazhmrlsszh7y2sdw45zaqaispvk4v-nixos-system-nixos-26.05.20260730.21ea275`.
+- Flake evaluation, Statix, Deadnix, ShellCheck, shell syntax checks, JSON
+  validation, Git integrity checks, and the full NixOS closure build pass.
+- The review work is committed in focused, independently evaluable commits, and
+  the working tree is clean.
 - The latest shell changes have not yet been activated. Run `rebuild` before
   judging the live shell behavior.
-- The worktree is intentionally dirty and contains all review work. Do not
-  reset or discard it.
-- Some newly added files are staged because Nix flakes ignore wholly untracked
-  source files. Nothing has been committed.
 
 ## Resume point
 
-All items in `docs/review/todo.md` are complete. The existing installation still needs the
-one-time `@snapshots` migration documented in `docs/snapshots.md` before activating
-the new system closure.
-
-After that, continue in this order:
-
-No review items remain.
+All review items are complete. Before activating the new system closure on an
+installation created before `@snapshots` existed, perform the one-time migration
+documented in `docs/snapshots.md`.

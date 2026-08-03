@@ -66,7 +66,7 @@
       "libvirtd"
     ];
     # Keep fresh installations locked until docs/installation.md's interactive passwd
-    # step. This avoids embedding even a temporary credential in a public repo.
+    # step. This avoids embedding even a temporary credential in source control.
     initialHashedPassword = "!";
     shell = pkgs.zsh;
   };
