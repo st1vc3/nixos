@@ -1,6 +1,6 @@
-# Ported from github.com/stivce/arch.dot. reload_apps is off because
-# scripts/set-wallpaper.sh already reloads kitty/waybar explicitly after
-# invoking matugen.
+# Base template mappings. Home Manager conditionally appends the Quickshell
+# mapping; see README.md. Application reloads are disabled because
+# scripts/set-wallpaper.sh handles supported live reloads after rendering.
 [config]
 reload_apps = false
 
@@ -11,15 +11,3 @@ output_path = "~/.config/hypr/hyprlock-colors.conf"
 [templates.kitty-colors]
 input_path = "~/.config/matugen/templates/kitty-colors.conf"
 output_path = "~/.config/kitty/colors.conf"
-
-[templates.waybar-colors]
-input_path = "~/.config/matugen/templates/waybar-colors.css"
-output_path = "~/.config/waybar/colors.css"
-
-[templates.wofi-colors]
-input_path = "~/.config/matugen/templates/wofi-colors.css"
-output_path = "~/.config/wofi/colors.css"
-
-[templates.swaync-colors]
-input_path = "~/.config/matugen/templates/swaync-colors.css"
-output_path = "~/.config/swaync/colors.css"

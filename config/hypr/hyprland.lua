@@ -14,13 +14,26 @@ hl.monitor({
 ---- MATUGEN COLORS -----
 -------------------------
 
+-- Add context to required HyprLua registrations. A failed reload should say
+-- exactly which rule or binding is incompatible instead of silently omitting
+-- part of the desktop configuration.
+local function required(name, register)
+    local ok, result = xpcall(register, debug.traceback)
+    if not ok then
+        error("failed to register " .. name .. ":\n" .. result, 0)
+    end
+    return result
+end
+
 -- Reads the matugen-generated accent color (config/matugen/) so the active
--- window border matches hyprlock/kitty/waybar/wofi. This file is re-read
+-- window border matches hyprlock, Kitty, and the Quickshell surfaces. This file is re-read
 -- on every config reload, and scripts/set-wallpaper.sh reloads Hyprland
 -- after regenerating it, so the border updates with the rest of the theme.
 -- Falls back to a fixed color if the file is missing/unparseable (e.g.
 -- before home/stivce.nix's seedMatugenDefaults has run).
 local function matugenHex(name, fallback)
+    -- Palette loading is deliberately optional: the checked-in fallback keeps
+    -- the compositor usable before Matugen has generated its first palette.
     local ok, hex = pcall(function()
         local f = io.open(os.getenv("HOME") .. "/.config/hypr/hyprlock-colors.conf", "r")
         if not f then return nil end
@@ -41,29 +54,8 @@ local surfaceHex = matugenHex("surface", "111318")
 
 local terminal    = "kitty"
 local fileManager = "nautilus"
-local menu        = "wofi --show drun"
 
-
--------------------
----- AUTOSTART ----
--------------------
-
-hl.on("hyprland.start", function ()
-    -- Audio: on NixOS the pipewire stack is socket-activated by systemd
-    -- (services.pipewire), so no manual pipewire/wireplumber/pulse starts.
-
-    hl.exec_cmd("waybar")
-    hl.exec_cmd("swaync")
-    -- NixOS: launch these via their systemd user units instead of a raw
-    -- exec_cmd - UWSM already starts both as part of graphical-session.target,
-    -- so a plain exec_cmd("hypridle") spawned a redundant second instance.
-    hl.exec_cmd("systemctl --user start hyprpolkitagent.service")
-    hl.exec_cmd("systemctl --user start hypridle.service")
-
-    -- Wallpaper: the script starts awww-daemon and sets red.jpg deterministically
-    -- (don't rely on the awww cache, which is empty on a fresh install).
-    hl.exec_cmd("$HOME/Scripts/set-wallpaper.sh")
-end)
+local menu = "quickshell ipc call launcher toggle"
 
 
 -------------------------------
@@ -279,15 +271,15 @@ hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
--- pcall: tolerate API drift so a bad dispatcher can't abort the config
-pcall(function() hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen()) end)
-hl.bind(mainMod .. " + Print",           hl.dsp.exec_cmd("hyprshot -m region --clipboard-only"))
-hl.bind(mainMod .. " + SHIFT + Print",   hl.dsp.exec_cmd("hyprshot -m output --clipboard-only"))
-hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd("$HOME/.local/bin/wofi-menu/powermenu"))
-hl.bind("ALT + SHIFT + 3", hl.dsp.exec_cmd("$HOME/.local/bin/misc/screenshot-region-save"))
+required("binding " .. mainMod .. "+F", function()
+    hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
+end)
+hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd("quickshell ipc call powermenu toggle"))
+hl.bind("ALT + SHIFT + 3", hl.dsp.exec_cmd("$HOME/.local/bin/misc/screenshot-output-save"))
 hl.bind("ALT + SHIFT + 4", hl.dsp.exec_cmd("$HOME/.local/bin/misc/screenshot-region"))
+hl.bind("ALT + SHIFT + 5", hl.dsp.exec_cmd("hyprquickframe"))
 hl.bind(mainMod .. " + SHIFT + Q",  hl.dsp.exec_cmd("$HOME/.config/hypr/start-hyprlock"))
-hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd("$HOME/.local/bin/misc/wallpaper-picker"))
+hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd("quickshell ipc call wallpaper toggle"))
 hl.bind(mainMod .. " + SHIFT + F1", hl.dsp.exec_cmd("$HOME/Scripts/set-wallpaper.sh"))
 
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
@@ -359,6 +351,16 @@ hl.window_rule({
     float = true,
 })
 
+-- Launched by clicking the expanded Quickshell notch calendar.
+hl.window_rule({
+    name  = "float-gnome-calendar",
+    match = { class = "^org\\.gnome\\.Calendar$" },
+
+    float  = true,
+    center = true,
+    opacity = "0.8 override",
+})
+
 
 -- No transparency for these apps / fullscreen content
 for name, m in pairs({
@@ -367,7 +369,9 @@ for name, m in pairs({
     ["opaque-helium"]        = { class = "helium" },
     ["opaque-fullscreen"]    = { fullscreen = true },
 }) do
-    pcall(hl.window_rule, { name = name, match = m, opacity = "1 override" })
+    required("window rule " .. name, function()
+        hl.window_rule({ name = name, match = m, opacity = "1 override" })
+    end)
 end
 
 -- WoW: own workspace, floating fullscreen, tearing allowed
@@ -379,35 +383,43 @@ for name, rule in pairs({
 }) do
     local r = { name = name, match = { title = "^World of Warcraft$" } }
     for k, v in pairs(rule) do r[k] = v end
-    pcall(hl.window_rule, r)
+    required("window rule " .. name, function()
+        hl.window_rule(r)
+    end)
 end
 
--- Blur for the shell layers
+-- Small Quickshell frosted-glass surfaces (the notch itself is opaque black,
+-- so it is deliberately NOT blurred). Sample the live content immediately
+-- behind them rather than xraying through windows to the wallpaper.
 for name, ns in pairs({
-    ["blur-waybar"]   = "waybar",
-    ["blur-launcher"] = "launcher",
-    ["blur-wofi"]     = "wofi",
+    ["blur-qs-notifications"] = "quickshell-notifications",
+    ["blur-qs-bar"]           = "quickshell-bar",
+    ["blur-qs-launcher"]      = "quickshell-launcher",
+    ["blur-qs-power"]         = "quickshell-power",
+    ["blur-qs-wallpaper"]     = "quickshell-wallpaper",
 }) do
-    pcall(hl.layer_rule, { name = name, match = { namespace = ns }, blur = true })
+    required("layer rule " .. name, function()
+        hl.layer_rule({ name = name, match = { namespace = ns }, blur = true, ignore_alpha = 0.1, xray = false })
+    end)
 end
 
-for name, ns in pairs({
-    ["blur-swaync-notifications"]  = "swaync-notification-window",
-    ["blur-swaync-control-center"] = "swaync-control-center",
-}) do
-    -- 0.02, not 0.0: at 0.0 nothing is ignored, so the layer's fully
-    -- transparent margins around the popup get blurred too, leaving a faint
-    -- rectangular halo. Must stay below the notification fill's 0.05 alpha
-    -- (swaync-colors.css) or the blur skips the glass body entirely.
-    -- xray: sample the wallpaper, not whatever window happens to be under
-    -- the popup - over a dark kitty window the glass otherwise reads as a
-    -- solid black box, while kitty itself always blurs the wallpaper.
-    pcall(hl.layer_rule, { name = name, match = { namespace = ns }, blur = true, ignore_alpha = 0.02, xray = true })
-end
+-- The notification centre should blur the actual windows/content immediately
+-- behind it. Unlike the small acrylic popups, do not xray through to wallpaper.
+required("layer rule blur-qs-center", function()
+    hl.layer_rule({
+        name = "blur-qs-center",
+        match = { namespace = "quickshell-center" },
+        blur = true,
+        ignore_alpha = 0.1,
+        xray = false,
+    })
+end)
 
 -- Hyprland's own layersIn fade animation applies to every new layer-shell
 -- surface, including awww's wallpaper layer - on top of the matugen
 -- fallback color and awww's own transition (already set to "none" in
 -- set-wallpaper.sh), this was the last source of visible fade-in delay at
 -- session start.
-pcall(hl.layer_rule, { name = "no-anim-wallpaper", match = { namespace = "awww-daemon" }, no_anim = true })
+required("layer rule no-anim-wallpaper", function()
+    hl.layer_rule({ name = "no-anim-wallpaper", match = { namespace = "awww-daemon" }, no_anim = true })
+end)

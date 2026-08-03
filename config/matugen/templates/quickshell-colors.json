@@ -1,0 +1,9 @@
+{
+  "accent": "{{colors.primary.dark.hex}}",
+  "accentText": "{{colors.on_primary.dark.hex}}",
+  "surface": "{{colors.surface.dark.hex}}",
+  "text": "{{colors.on_surface.dark.hex}}",
+  "subtext": "{{colors.on_surface_variant.dark.hex}}",
+  "outline": "{{colors.outline.dark.hex}}",
+  "alert": "{{colors.error.dark.hex}}"
+}

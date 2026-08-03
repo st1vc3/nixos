@@ -1,13 +1,42 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Idempotent: if hyprlock is already up, don't kill+relaunch it, which would
-# briefly unlock the session before the new instance takes over.
-pgrep -x hyprlock >/dev/null && exit 0
+# Hold an exclusive lock for the complete hyprlock lifetime. Unlike a separate
+# pgrep check, this is atomic when two lock requests arrive at the same time.
+runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+exec 9>"$runtime_dir/hyprlock-launch.lock"
+flock -n 9 || exit 0
 
 # JPEG instead of grim's default PNG: ~0.06s vs ~2.2s for a 4K capture (PNG's
 # lossless encode is the slow part, not the capture itself), and hyprlock
 # blurs this heavily anyway so the lossy compression is invisible.
-grim -t jpeg "$HOME/.cache/lockscreen.jpg" || { notify-send "Failed to capture lockscreen"; exit 1; }
-chmod 600 "$HOME/.cache/lockscreen.jpg"
-exec hyprlock
+lock_image="$runtime_dir/hyprlock-background.jpg"
+fallback_image="$HOME/Pictures/wallpapers/abstract/red.jpg"
+
+# Invoked indirectly by the traps below.
+# shellcheck disable=SC2329
+cleanup() {
+  rm -f -- "$lock_image"
+}
+trap cleanup EXIT HUP INT TERM
+
+if grim -t jpeg "$lock_image"; then
+  chmod 600 "$lock_image"
+elif install -m 600 -- "$fallback_image" "$lock_image"; then
+  notify-send "Screen capture failed" "Locking with the fallback wallpaper"
+else
+  # Locking is the security boundary. Even if both image sources fail,
+  # create a valid minimal image rather than allowing a missing/invalid path to
+  # prevent hyprlock from starting. ImageMagick is installed by Home Manager.
+  notify-send "Lock-screen background unavailable" "Locking without an image"
+  magick -size 1x1 xc:black "$lock_image" || true
+  [[ ! -e "$lock_image" ]] || chmod 600 "$lock_image"
+fi
+
+if hyprlock; then
+  status=0
+else
+  status=$?
+fi
+
+exit "$status"

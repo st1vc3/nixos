@@ -1,0 +1,55 @@
+pragma Singleton
+
+// Shared UI state for the shell. Kept tiny and global so the bar button, the
+// notification centre and anything else can agree on what's open without
+// threading properties through the tree.
+
+import Quickshell
+
+Singleton {
+    id: root
+
+    property bool centerOpen: false
+    property bool launcherOpen: false
+    property bool powerMenuOpen: false
+    property bool wallpaperPickerOpen: false
+
+    function closeOverlays() {
+        centerOpen = false;
+        launcherOpen = false;
+        powerMenuOpen = false;
+        wallpaperPickerOpen = false;
+    }
+
+    function toggleCenter() {
+        centerOpen = !centerOpen;
+    }
+
+    function openLauncher() {
+        closeOverlays();
+        launcherOpen = true;
+    }
+
+    function closeLauncher() {
+        launcherOpen = false;
+    }
+
+    function toggleLauncher() {
+        if (launcherOpen)
+            closeLauncher();
+        else
+            openLauncher();
+    }
+
+    function togglePowerMenu() {
+        const opening = !powerMenuOpen;
+        closeOverlays();
+        powerMenuOpen = opening;
+    }
+
+    function toggleWallpaperPicker() {
+        const opening = !wallpaperPickerOpen;
+        closeOverlays();
+        wallpaperPickerOpen = opening;
+    }
+}

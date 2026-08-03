@@ -1,0 +1,139 @@
+pragma Singleton
+
+// Owns the freedesktop notification server (org.freedesktop.Notifications).
+// Quickshell is the sole daemon configured to claim this DBus name.
+//
+// `list` is the full tracked history (shown in the notification centre);
+// `activeToasts` is the transient subset currently shown as on-screen popups.
+
+import QtQuick
+import Quickshell
+import Quickshell.Services.Notifications
+
+Singleton {
+    id: root
+
+    // Full history model for the centre.
+    readonly property alias list: server.trackedNotifications
+
+    // A native model avoids rebuilding a Repeater from a JavaScript array every
+    // time a toast arrives, which can crash Qt during a rapid notification burst.
+    readonly property alias activeToasts: activeToastModel
+    property var queuedToasts: []
+
+    // Default on-screen dwell for a toast when the app gives no expireTimeout.
+    readonly property int defaultToastMs: 5000
+    readonly property int maxVisibleToasts: 5
+    readonly property int maxHistory: 100
+    property int nextToastKey: 1
+
+    ListModel {
+        id: activeToastModel
+        dynamicRoles: true
+    }
+
+    function activeContainsKey(key) {
+        for (let i = 0; i < activeToastModel.count; i++) {
+            if (activeToastModel.get(i).toastKey === key)
+                return true;
+        }
+        return false;
+    }
+
+    function addToast(n) {
+        if (!n)
+            return;
+
+        const entry = { toastKey: nextToastKey++, notification: n };
+        if (activeToastModel.count < maxVisibleToasts)
+            activeToastModel.append(entry);
+        else
+            queuedToasts = queuedToasts.concat([entry]);
+    }
+
+    function removeToastByKey(key) {
+        for (let i = activeToastModel.count - 1; i >= 0; i--) {
+            if (activeToastModel.get(i).toastKey === key)
+                activeToastModel.remove(i);
+        }
+        queuedToasts = queuedToasts.filter(entry => entry.toastKey !== key);
+
+        while (activeToastModel.count < maxVisibleToasts && queuedToasts.length > 0) {
+            const next = queuedToasts[0];
+            queuedToasts = queuedToasts.slice(1);
+            if (next && !activeContainsKey(next.toastKey))
+                activeToastModel.append(next);
+        }
+    }
+
+    function removeToast(n) {
+        for (let i = activeToastModel.count - 1; i >= 0; i--) {
+            if (activeToastModel.get(i).notification === n)
+                removeToastByKey(activeToastModel.get(i).toastKey);
+        }
+        const queued = queuedToasts.filter(entry => entry.notification === n);
+        for (const entry of queued)
+            removeToastByKey(entry.toastKey);
+    }
+
+    function toastTimeout(n) {
+        if (!n || n.expireTimeout === undefined || n.expireTimeout < 0)
+            return defaultToastMs;
+        return n.expireTimeout;
+    }
+
+    function pruneHistory() {
+        const values = server.trackedNotifications.values;
+        const overflow = Math.max(0, values.length - maxHistory);
+        for (let i = 0; i < overflow; i++) {
+            const oldest = values[i];
+            if (!oldest || !oldest.dismiss)
+                continue;
+            removeToast(oldest);
+            oldest.dismiss();
+        }
+    }
+
+    function dismiss(n, toastKey) {
+        if (toastKey !== undefined && toastKey >= 0)
+            removeToastByKey(toastKey);
+        else
+            removeToast(n);
+        if (n && n.dismiss)
+            n.dismiss();
+    }
+
+    function clearAll() {
+        activeToastModel.clear();
+        queuedToasts = [];
+        // Copy first: dismiss() mutates trackedNotifications as we go.
+        const all = [];
+        for (let i = 0; i < server.trackedNotifications.values.length; i++)
+            all.push(server.trackedNotifications.values[i]);
+        for (const n of all)
+            if (n && n.dismiss)
+                n.dismiss();
+    }
+
+    NotificationServer {
+        id: server
+
+        // Advertise what our QML UI can actually render, so apps send rich
+        // notifications instead of degrading.
+        keepOnReload: true
+        actionsSupported: true
+        bodySupported: true
+        bodyMarkupSupported: true
+        bodyImagesSupported: true
+        imageSupported: true
+
+        onNotification: function (n) {
+            // tracked=true keeps it in trackedNotifications (history) until we
+            // explicitly dismiss it; without this it would vanish immediately.
+            n.tracked = true;
+            root.addToast(n);
+            // trackedNotifications is updated after this callback returns.
+            Qt.callLater(root.pruneHistory);
+        }
+    }
+}
