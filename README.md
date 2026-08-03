@@ -37,7 +37,7 @@ My NixOS installation, configured declaratively with [flakes](https://nixos.wiki
 | `configuration.nix` | Thin entry point: boot, network, locale, users + `imports` |
 | `hardware-configuration.nix` | Machine-specific, generated during install |
 | `disko.nix` | Declarative disk layout - **set the target `device` before use** |
-| `modules/nvidia.nix` | AMD microcode + NVIDIA graphics and video environment |
+| `modules/nvidia.nix` | NVIDIA graphics, kernel driver, and video environment |
 | `modules/desktop.nix` | Hyprland, SDDM + SilentSDDM theme, portals, lock, fonts |
 | `modules/audio.nix` | PipeWire |
 | `modules/apps.nix` | Small set of system-wide CLI/recovery tools |
