@@ -1,5 +1,5 @@
 // Centered Quickshell power menu. Destructive session actions require a
-// second confirmation click; lock and suspend remain immediate.
+// second confirmation step; lock and suspend remain immediate.
 
 pragma ComponentBehavior: Bound
 
@@ -14,6 +14,7 @@ PanelWindow {
 
     property string pendingAction: ""
     property int currentIndex: 0
+    property int confirmationIndex: 0
     readonly property var actions: [
         { name: "Lock", icon: "󰌾", command: [Quickshell.env("HOME") + "/.config/hypr/start-hyprlock"], confirm: false },
         { name: "Suspend", icon: "󰒲", command: ["systemctl", "suspend"], confirm: false },
@@ -42,6 +43,8 @@ PanelWindow {
     function choose(action) {
         if (action.confirm) {
             pendingAction = action.name;
+            confirmationIndex = 0;
+            panel.forceActiveFocus();
             return;
         }
         execute(action);
@@ -64,6 +67,7 @@ PanelWindow {
     onVisibleChanged: {
         pendingAction = "";
         currentIndex = 0;
+        confirmationIndex = 0;
         if (visible)
             Qt.callLater(() => panel.forceActiveFocus());
     }
@@ -103,7 +107,19 @@ PanelWindow {
             }
 
             if (root.pendingAction.length > 0) {
-                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Y) {
+                if (event.key === Qt.Key_Left || event.key === Qt.Key_Up || event.key === Qt.Key_H || event.key === Qt.Key_K) {
+                    root.confirmationIndex = (root.confirmationIndex + 1) % 2;
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Right || event.key === Qt.Key_Down || event.key === Qt.Key_L || event.key === Qt.Key_J) {
+                    root.confirmationIndex = (root.confirmationIndex + 1) % 2;
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    if (root.confirmationIndex === 0)
+                        root.pendingAction = "";
+                    else
+                        root.execute(root.actionNamed(root.pendingAction));
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Y) {
                     root.execute(root.actionNamed(root.pendingAction));
                     event.accepted = true;
                 } else if (event.key === Qt.Key_N) {
@@ -192,22 +208,34 @@ PanelWindow {
                 visible: root.pendingAction.length > 0
 
                 Rectangle {
+                    readonly property bool selected: root.confirmationIndex === 0
                     implicitWidth: 130
                     implicitHeight: 48
                     radius: 14
-                    color: cancelHover.hovered ? Colors.glass(0.95) : Colors.glass(0.55)
+                    color: cancelHover.hovered || selected ? Colors.glass(0.95) : Colors.glass(0.55)
+                    border.width: selected ? 2 : 1
+                    border.color: selected ? Colors.accent : Colors.glass(0.8)
                     Text { anchors.centerIn: parent; text: "Cancel"; color: Colors.text; font.pixelSize: 14 }
-                    HoverHandler { id: cancelHover }
+                    HoverHandler {
+                        id: cancelHover
+                        onHoveredChanged: if (hovered) root.confirmationIndex = 0
+                    }
                     TapHandler { onTapped: root.pendingAction = "" }
                 }
 
                 Rectangle {
+                    readonly property bool selected: root.confirmationIndex === 1
                     implicitWidth: 130
                     implicitHeight: 48
                     radius: 14
-                    color: confirmHover.hovered ? Colors.alert : Colors.glass(0.95)
+                    color: confirmHover.hovered || selected ? Colors.alert : Colors.glass(0.55)
+                    border.width: selected ? 2 : 1
+                    border.color: selected ? Colors.alert : Colors.glass(0.8)
                     Text { anchors.centerIn: parent; text: "Confirm"; color: Colors.text; font.pixelSize: 14; font.bold: true }
-                    HoverHandler { id: confirmHover }
+                    HoverHandler {
+                        id: confirmHover
+                        onHoveredChanged: if (hovered) root.confirmationIndex = 1
+                    }
                     TapHandler { onTapped: root.execute(root.actionNamed(root.pendingAction)) }
                 }
             }
