@@ -66,6 +66,13 @@ rollback_system() {
 }
 
 # =========================================================
+# Claude Code
+# =========================================================
+
+# Launch Claude Code without the per-action permission prompts.
+alias cc="claude --dangerously-skip-permissions"
+
+# =========================================================
 # misc
 # =========================================================
 
