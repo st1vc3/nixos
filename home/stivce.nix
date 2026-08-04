@@ -48,6 +48,28 @@
       # Keep Claude Code and Codex aligned from one declarative source.
       ".claude/CLAUDE.md".source = ../config/agents/shared.md;
       ".codex/AGENTS.md".source = ../config/agents/shared.md;
+
+      # Status line renderer (active model + context window usage). Referenced
+      # by the statusLine command in .claude/settings.json below.
+      ".claude/statusline.sh" = {
+        source = ../config/claude/statusline.sh;
+        executable = true;
+      };
+
+      # Own Claude Code's settings declaratively. Interactive changes (e.g.
+      # /model, /theme) no longer persist across rebuilds - this file is the
+      # source of truth. settings.local.json stays unmanaged for machine-local
+      # permission grants.
+      ".claude/settings.json".text = builtins.toJSON {
+        model = "opus";
+        tui = "fullscreen";
+        theme = "dark-daltonized";
+        skipDangerousModePermissionPrompt = true;
+        statusLine = {
+          type = "command";
+          command = "${config.home.homeDirectory}/.claude/statusline.sh";
+        };
+      };
     };
 
     # Matugen writes Hyprlock and Kitty colors straight to these paths at
