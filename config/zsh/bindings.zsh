@@ -14,4 +14,10 @@ function zvm_after_init() {
 
   # Ctrl-F: fzf file picker excluding hidden files (defined in fzf.zsh)
   bindkey '^F' _fzf_file_no_hidden
+
+  # fzf binds these when `fzf --zsh` is sourced in .zshrc, but that runs
+  # before zsh-vi-mode rebuilds its keymaps here - which wipes them and
+  # leaves Ctrl-R on plain zsh reverse search. Re-apply them in the hook.
+  bindkey '^R' fzf-history-widget
+  bindkey '^T' fzf-file-widget
 }
