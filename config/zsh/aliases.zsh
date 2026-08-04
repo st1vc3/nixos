@@ -66,11 +66,14 @@ rollback_system() {
 }
 
 # =========================================================
-# Claude Code
+# AI agents
 # =========================================================
 
 # Launch Claude Code without the per-action permission prompts.
 alias cc="claude --dangerously-skip-permissions"
+
+# Launch Codex skipping approvals and without the sandbox restriction.
+alias cx="codex --dangerously-bypass-approvals-and-sandbox"
 
 # =========================================================
 # misc
