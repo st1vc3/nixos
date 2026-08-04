@@ -58,5 +58,6 @@ in
     zen-browser
     zoxide
     kdePackages.qt6ct
+    obs-studio
   ];
 }
