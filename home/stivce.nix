@@ -49,17 +49,15 @@
       ".claude/CLAUDE.md".source = ../config/agents/shared.md;
       ".codex/AGENTS.md".source = ../config/agents/shared.md;
 
-      # Status line renderer (active model + context window usage). Referenced
-      # by the statusLine command in .claude/settings.json below.
-      ".claude/statusline.sh" = {
-        source = ../config/claude/statusline.sh;
-        executable = true;
-      };
-
       # Own Claude Code's settings declaratively. Interactive changes (e.g.
       # /model, /theme) no longer persist across rebuilds - this file is the
       # source of truth. settings.local.json stays unmanaged for machine-local
       # permission grants.
+      #
+      # The status line prints the active model plus context-window usage read
+      # straight from the payload's .context_window.used_percentage field, e.g.
+      # "Opus | ctx: 20% used". Kept as a single inline command to match the
+      # macosx dotfiles repo.
       ".claude/settings.json".text = builtins.toJSON {
         model = "opus";
         tui = "fullscreen";
@@ -67,7 +65,7 @@
         skipDangerousModePermissionPrompt = true;
         statusLine = {
           type = "command";
-          command = "${config.home.homeDirectory}/.claude/statusline.sh";
+          command = ''input=$(cat); model=$(echo "$input" | jq -r '.model.display_name'); used=$(echo "$input" | jq -r '.context_window.used_percentage // empty'); if [ -n "$used" ]; then printf "%s | ctx: %.0f%% used" "$model" "$used"; else printf "%s" "$model"; fi'';
         };
       };
     };
