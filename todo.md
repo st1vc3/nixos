@@ -12,7 +12,7 @@ is checked once the feature is implemented, deployed, and tested.
   the bar, matching the right-hand notification button in size and shape. It
   shows only the occupied workspaces (one indicator per workspace that has
   windows), and clicking one switches to that workspace.
-- [ ] **USB auto-mount** - Automatically mount removable drives (USB sticks and
+- [x] **USB auto-mount** - Automatically mount removable drives (USB sticks and
   similar) when they are plugged in.
 - [x] **SSH launcher mode** - Typing `ssh` in the launcher switches it into an
   SSH mode; the host you then type is opened as an SSH session.

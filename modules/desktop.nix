@@ -60,6 +60,11 @@
   security.polkit.enable = true;
   services.gvfs.enable = true;
 
+  # Removable-media backend. udisks2 exposes the mount/unmount D-Bus API and
+  # polkit rules; udiskie (a per-user service in home/services.nix) listens for
+  # hotplugged drives and mounts them automatically under /run/media/$USER.
+  services.udisks2.enable = true;
+
   fonts.packages = with pkgs; [
     nerd-fonts.jetbrains-mono
     noto-fonts

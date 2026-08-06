@@ -1,6 +1,17 @@
 { lib, pkgs, ... }:
 
 {
+  # Auto-mount removable drives (USB sticks, SD cards) as soon as they are
+  # plugged in, backed by the system udisks2 service (modules/desktop.nix).
+  # tray = "never" keeps it headless - mounts just appear under
+  # /run/media/$USER and notify through the shell's notification daemon.
+  services.udiskie = {
+    enable = true;
+    automount = true;
+    notify = true;
+    tray = "never";
+  };
+
   systemd.user.services = {
     awww = {
       Unit = {
