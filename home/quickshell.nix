@@ -20,6 +20,14 @@ in
     }
 
     (lib.mkIf cfg.enable {
+      # Clipboard history backend for the launcher's `cli` mode. cliphist keeps
+      # a persistent history that wl-paste feeds; the launcher lists and
+      # re-copies entries through it.
+      home.packages = [
+        pkgs.cliphist
+        pkgs.wl-clipboard
+      ];
+
       xdg.configFile = {
         # Deploy the complete tracked source tree recursively. New components
         # only need to be added to config/quickshell and staged in Git before a
@@ -57,6 +65,38 @@ in
           ExecStart = lib.getExe pkgs.quickshell;
           Restart = "on-failure";
           RestartSec = 1;
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
+
+      # Persist clipboard history. Two watchers are the upstream-recommended
+      # setup: wl-paste emits per MIME class, so text and image need separate
+      # subscriptions to capture both. cliphist store dedupes and trims to its
+      # configured max, backing the launcher's clipboard-manager mode.
+      systemd.user.services.cliphist-text = {
+        Unit = {
+          Description = "Store text clipboard entries in cliphist";
+          PartOf = [ "graphical-session.target" ];
+          After = [ "graphical-session.target" ];
+        };
+        Service = {
+          ExecStart = "${pkgs.wl-clipboard}/bin/wl-paste --type text --watch ${pkgs.cliphist}/bin/cliphist store";
+          Restart = "on-failure";
+          RestartSec = 2;
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
+
+      systemd.user.services.cliphist-image = {
+        Unit = {
+          Description = "Store image clipboard entries in cliphist";
+          PartOf = [ "graphical-session.target" ];
+          After = [ "graphical-session.target" ];
+        };
+        Service = {
+          ExecStart = "${pkgs.wl-clipboard}/bin/wl-paste --type image --watch ${pkgs.cliphist}/bin/cliphist store";
+          Restart = "on-failure";
+          RestartSec = 2;
         };
         Install.WantedBy = [ "graphical-session.target" ];
       };

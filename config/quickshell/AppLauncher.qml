@@ -1,5 +1,10 @@
 // Centered application launcher backed by Quickshell's native desktop-entry
 // model. Opened through IPC by Hyprland's Super+Space binding.
+//
+// Typing "cli" and pressing Enter switches the launcher into a clipboard
+// manager (Raycast-style): it lists cliphist history, stays searchable, is
+// navigable with the arrow keys, and Enter re-copies the highlighted entry to
+// the clipboard. Esc steps back to application mode.
 
 pragma ComponentBehavior: Bound
 
@@ -14,6 +19,11 @@ PanelWindow {
 
     readonly property int panelWidth: 680
     readonly property int panelHeight: 620
+
+    // "apps" browses desktop entries, "clipboard" browses cliphist history.
+    property string mode: "apps"
+    readonly property bool clipMode: mode === "clipboard"
+
     readonly property var applications: DesktopEntries.applications.values
         .filter(entry => !entry.noDisplay)
         .sort((a, b) => a.name.localeCompare(b.name))
@@ -27,6 +37,21 @@ PanelWindow {
             return terms.every(term => haystack.includes(term));
         });
     }
+
+    // Each item is { id, preview }: id is cliphist's numeric row key, preview is
+    // its single-line description used for both display and searching.
+    property var clipboardItems: []
+    readonly property var filteredClipboard: {
+        const query = search.text.toLowerCase().trim();
+        if (query.length === 0)
+            return clipboardItems;
+        return clipboardItems.filter(item => item.preview.toLowerCase().includes(query));
+    }
+
+    // True when the app-mode query is the clipboard trigger, so the footer can
+    // hint that Enter opens the clipboard rather than launching an app.
+    readonly property bool clipTriggerArmed: !clipMode
+        && search.text.trim().toLowerCase() === "cli"
 
     anchors.top: true
     anchors.left: true
@@ -53,8 +78,61 @@ PanelWindow {
         entry.execute();
     }
 
+    function enterClipboardMode() {
+        mode = "clipboard";
+        search.text = "";
+        clipboardItems = [];
+        clipResults.currentIndex = 0;
+        clipLister.running = true;
+    }
+
+    function exitClipboardMode() {
+        mode = "apps";
+        search.text = "";
+        results.currentIndex = 0;
+    }
+
+    // Re-copy a history entry. cliphist decode resolves the raw payload for the
+    // numeric id (text or image); wl-copy places it back on the clipboard so it
+    // becomes the current paste target.
+    function copyClip(item) {
+        if (!item)
+            return;
+        close();
+        clipCopy.command = ["sh", "-c", "cliphist decode " + item.id + " | wl-copy"];
+        clipCopy.startDetached();
+    }
+
+    function moveSelection(delta) {
+        const view = clipMode ? clipResults : results;
+        if (delta > 0)
+            view.incrementCurrentIndex();
+        else
+            view.decrementCurrentIndex();
+    }
+
+    function submit() {
+        if (clipMode) {
+            copyClip(filteredClipboard[clipResults.currentIndex]);
+            return;
+        }
+        if (clipTriggerArmed) {
+            enterClipboardMode();
+            return;
+        }
+        launch(filteredApplications[results.currentIndex]);
+    }
+
+    function goBackOrClose() {
+        if (clipMode)
+            exitClipboardMode();
+        else
+            close();
+    }
+
     onVisibleChanged: {
         if (visible) {
+            mode = "apps";
             search.text = "";
             results.currentIndex = 0;
             Qt.callLater(() => search.forceActiveFocus());
@@ -67,6 +145,27 @@ PanelWindow {
         function open(): void { ShellState.openLauncher(); }
         function close(): void { ShellState.closeLauncher(); }
     }
+
+    // Reads the clipboard history. cliphist list emits one "<id>\t<preview>" row
+    // per entry, newest first.
+    Process {
+        id: clipLister
+        command: ["cliphist", "list"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.clipboardItems = this.text.split("\n")
+                    .filter(line => line.length > 0)
+                    .map(line => {
+                        const tab = line.indexOf("\t");
+                        if (tab < 0)
+                            return { id: line, preview: line };
+                        return { id: line.slice(0, tab), preview: line.slice(tab + 1) };
+                    });
+            }
+        }
+    }
+
+    Process { id: clipCopy }
 
     // Full-screen click-away target. The panel itself consumes clicks so only
     // the transparent surrounding area closes the launcher.
@@ -107,8 +206,8 @@ PanelWindow {
                     spacing: 12
 
                     Text {
-                        text: "⌕"
-                        color: Colors.subtext
+                        text: root.clipMode ? "🖹" : "⌕"
+                        color: root.clipMode ? Colors.accent : Colors.subtext
                         font.pixelSize: 22
                     }
 
@@ -125,34 +224,45 @@ PanelWindow {
                             font.pixelSize: 16
                             clip: true
 
-                            Keys.onEscapePressed: root.close()
-                            Keys.onDownPressed: results.incrementCurrentIndex()
-                            Keys.onUpPressed: results.decrementCurrentIndex()
-                            Keys.onReturnPressed: root.launch(root.filteredApplications[results.currentIndex])
-                            Keys.onEnterPressed: root.launch(root.filteredApplications[results.currentIndex])
+                            Keys.onEscapePressed: root.goBackOrClose()
+                            Keys.onDownPressed: root.moveSelection(1)
+                            Keys.onUpPressed: root.moveSelection(-1)
+                            Keys.onReturnPressed: root.submit()
+                            Keys.onEnterPressed: root.submit()
 
-                            onTextChanged: results.currentIndex = 0
+                            onTextChanged: {
+                                if (root.clipMode)
+                                    clipResults.currentIndex = 0;
+                                else
+                                    results.currentIndex = 0;
+                            }
                         }
 
                         Text {
                             anchors.fill: parent
                             visible: search.text.length === 0
-                            text: "Type to search applications"
+                            text: root.clipMode
+                                ? "Search clipboard history"
+                                : "Type to search applications"
                             color: Colors.subtext
                             font.pixelSize: 14
                         }
                     }
 
                     Text {
-                        text: root.filteredApplications.length + " apps"
+                        text: root.clipMode
+                            ? root.filteredClipboard.length + " items"
+                            : root.filteredApplications.length + " apps"
                         color: Colors.subtext
                         font.pixelSize: 12
                     }
                 }
             }
 
+            // Application results.
             ListView {
                 id: results
+                visible: !root.clipMode
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
@@ -235,18 +345,90 @@ PanelWindow {
                 }
             }
 
+            // Clipboard history results.
+            ListView {
+                id: clipResults
+                visible: root.clipMode
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                spacing: 6
+                model: root.filteredClipboard
+                currentIndex: 0
+                keyNavigationWraps: true
+
+                delegate: Rectangle {
+                    id: clipRow
+                    required property var modelData
+                    required property int index
+
+                    width: ListView.view ? ListView.view.width : 0
+                    height: 52
+                    radius: 14
+                    color: (ListView.isCurrentItem || clipHover.hovered)
+                        ? Colors.glass(0.9)
+                        : "transparent"
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 14
+                        spacing: 12
+
+                        Text {
+                            text: "🖹"
+                            color: Colors.subtext
+                            font.pixelSize: 16
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: clipRow.modelData.preview
+                            color: Colors.text
+                            font.pixelSize: 15
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            visible: ListView.isCurrentItem
+                            text: "↵"
+                            color: Colors.accent
+                            font.pixelSize: 18
+                        }
+                    }
+
+                    HoverHandler {
+                        id: clipHover
+                        onHoveredChanged: if (hovered) clipResults.currentIndex = clipRow.index
+                    }
+                    TapHandler { onTapped: root.copyClip(clipRow.modelData) }
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    visible: root.filteredClipboard.length === 0
+                    text: "Clipboard history is empty"
+                    color: Colors.subtext
+                    font.pixelSize: 14
+                }
+            }
+
             RowLayout {
                 Layout.fillWidth: true
 
                 Text {
-                    text: "↑↓ Navigate   Enter Launch   Esc Close"
-                    color: Colors.subtext
+                    text: root.clipMode
+                        ? "↑↓ Navigate   Enter Copy   Esc Back"
+                        : (root.clipTriggerArmed
+                            ? "↵ Open clipboard history"
+                            : "↑↓ Navigate   Enter Launch   Esc Close")
+                    color: root.clipTriggerArmed ? Colors.accent : Colors.subtext
                     font.pixelSize: 12
                     Layout.fillWidth: true
                 }
 
                 Text {
-                    text: "Quickshell"
+                    text: root.clipMode ? "Clipboard" : "Quickshell"
                     color: Colors.accent
                     font.pixelSize: 12
                     font.bold: true
