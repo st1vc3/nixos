@@ -86,26 +86,42 @@ PanelWindow {
         }).sort((a, b) => a.id - b.id);
     }
 
-    // Open windows for the dropdown, sorted by workspace then class.
-    readonly property var windows: {
-        const arr = [];
+    // Open windows grouped per workspace for the dropdown. Each group is
+    // { wsId, wsName, windows: [{ appClass, title }] }, sorted by workspace id
+    // with windows sorted by class within it.
+    readonly property var groups: {
+        const map = ({});
+        const order = [];
         const tops = Hyprland.toplevels.values;
         for (let i = 0; i < tops.length; i++) {
             const o = tops[i].lastIpcObject;
             if (!o || !o.workspace || o.workspace.id <= 0)
                 continue;
-            if (bar.modelData && o.monitor !== undefined && o.workspace.monitor
-                    && o.workspace.monitor !== bar.modelData.name)
-                continue;
-            arr.push({
-                appClass: o.class || "?",
-                title: o.title || "",
-                wsId: o.workspace.id,
-                wsName: o.workspace.name || ("" + o.workspace.id)
-            });
+            const id = o.workspace.id;
+            if (!map[id]) {
+                map[id] = { wsId: id, wsName: o.workspace.name || ("" + id), windows: [] };
+                order.push(id);
+            }
+            map[id].windows.push({ appClass: o.class || "?", title: o.title || "" });
         }
-        arr.sort((a, b) => (a.wsId - b.wsId) || a.appClass.localeCompare(b.appClass));
-        return arr;
+        order.sort((a, b) => a - b);
+        return order.map(id => {
+            map[id].windows.sort((a, b) => a.appClass.localeCompare(b.appClass));
+            return map[id];
+        });
+    }
+    readonly property int windowCount: {
+        let n = 0;
+        for (let i = 0; i < groups.length; i++)
+            n += groups[i].windows.length;
+        return n;
+    }
+    // Height needed to show every group header plus its window rows.
+    readonly property real contentHeight: {
+        let h = 12;
+        for (let i = 0; i < groups.length; i++)
+            h += 24 + groups[i].windows.length * 42 + (i < groups.length - 1 ? 8 : 0);
+        return Math.max(h, 44);
     }
 
     function focusWorkspace(id) {
@@ -166,7 +182,7 @@ PanelWindow {
     Rectangle {
         id: dropdown
 
-        readonly property real openHeight: Math.min(12 + bar.windows.length * 44, 400)
+        readonly property real openHeight: Math.min(bar.contentHeight, 420)
 
         anchors.top: pillRow.bottom
         anchors.left: parent.left
@@ -191,84 +207,114 @@ PanelWindow {
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 6
-            spacing: 2
+            spacing: 6
             opacity: bar.expanded ? 1 : 0
             visible: opacity > 0
             Behavior on opacity { NumberAnimation { duration: 180 } }
 
+            // One section per workspace: a header with the workspace badge, then
+            // its windows underneath.
             Repeater {
-                model: bar.windows
+                model: bar.groups
 
-                delegate: Rectangle {
-                    id: winRow
+                delegate: ColumnLayout {
+                    id: group
                     required property var modelData
 
+                    readonly property bool isFocused: modelData.wsId === bar.focusedId
+
                     Layout.fillWidth: true
-                    implicitHeight: 42
-                    radius: 12
-                    color: rowHover.hovered ? Colors.glass(0.9) : "transparent"
+                    spacing: 2
 
                     RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
-                        spacing: 10
-
-                        Image {
-                            Layout.preferredWidth: 24
-                            Layout.preferredHeight: 24
-                            source: Quickshell.iconPath(winRow.modelData.appClass, "application-x-executable")
-                            sourceSize.width: 24
-                            sourceSize.height: 24
-                            fillMode: Image.PreserveAspectFit
-                        }
-
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 0
-
-                            Text {
-                                Layout.fillWidth: true
-                                text: winRow.modelData.appClass
-                                color: Colors.text
-                                font.pixelSize: 13
-                                font.bold: true
-                                elide: Text.ElideRight
-                            }
-                            Text {
-                                Layout.fillWidth: true
-                                visible: text.length > 0
-                                text: winRow.modelData.title
-                                color: Colors.subtext
-                                font.pixelSize: 11
-                                elide: Text.ElideRight
-                            }
-                        }
+                        Layout.fillWidth: true
+                        spacing: 8
 
                         Rectangle {
-                            Layout.preferredWidth: 22
-                            Layout.preferredHeight: 22
-                            radius: 11
-                            color: Colors.glass(0.6)
+                            Layout.preferredWidth: 20
+                            Layout.preferredHeight: 20
+                            radius: 10
+                            color: group.isFocused ? Colors.accent : Colors.glass(0.6)
                             Text {
                                 anchors.centerIn: parent
-                                text: winRow.modelData.wsName
-                                color: Colors.subtext
+                                text: group.modelData.wsName
+                                color: group.isFocused ? Colors.accentText : Colors.subtext
                                 font.pixelSize: 11
                                 font.bold: true
                             }
                         }
+
+                        Text {
+                            text: "Workspace"
+                            color: group.isFocused ? Colors.accent : Colors.subtext
+                            font.pixelSize: 11
+                            font.bold: true
+                        }
+
+                        Item { Layout.fillWidth: true }
                     }
 
-                    HoverHandler { id: rowHover }
-                    TapHandler { onTapped: bar.focusWorkspace(winRow.modelData.wsId) }
+                    Repeater {
+                        model: group.modelData.windows
+
+                        delegate: Rectangle {
+                            id: winRow
+                            required property var modelData
+
+                            Layout.fillWidth: true
+                            implicitHeight: 40
+                            radius: 12
+                            color: rowHover.hovered ? Colors.glass(0.9) : "transparent"
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 10
+                                spacing: 10
+
+                                Image {
+                                    Layout.preferredWidth: 22
+                                    Layout.preferredHeight: 22
+                                    source: Quickshell.iconPath(winRow.modelData.appClass, "application-x-executable")
+                                    sourceSize.width: 22
+                                    sourceSize.height: 22
+                                    fillMode: Image.PreserveAspectFit
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 0
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: winRow.modelData.appClass
+                                        color: Colors.text
+                                        font.pixelSize: 13
+                                        font.bold: true
+                                        elide: Text.ElideRight
+                                    }
+                                    Text {
+                                        Layout.fillWidth: true
+                                        visible: text.length > 0
+                                        text: winRow.modelData.title
+                                        color: Colors.subtext
+                                        font.pixelSize: 11
+                                        elide: Text.ElideRight
+                                    }
+                                }
+                            }
+
+                            HoverHandler { id: rowHover }
+                            TapHandler { onTapped: bar.focusWorkspace(group.modelData.wsId) }
+                        }
+                    }
                 }
             }
 
             Text {
                 Layout.fillWidth: true
                 Layout.topMargin: 6
-                visible: bar.windows.length === 0
+                visible: bar.windowCount === 0
                 horizontalAlignment: Text.AlignHCenter
                 text: "No open windows"
                 color: Colors.subtext
