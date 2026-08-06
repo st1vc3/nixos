@@ -101,6 +101,9 @@ PanelWindow {
     }
     property string previewSource: ""
     property string previewDims: ""
+    // Id of the image the preview belongs to, so a late decode can't attach to
+    // the wrong (or no) selection.
+    property string previewId: ""
 
     // --- SSH ----------------------------------------------------------------
     property var sshHosts: []
@@ -205,18 +208,17 @@ PanelWindow {
     // the quick-look card once written. Non-image or unselected rows clear it,
     // so the preview closes the moment the selection moves.
     function updatePreview() {
-        if (!clipMode || clipResults.currentIndex < 0) {
-            previewSource = "";
-            return;
-        }
-        const item = filteredClipboard[clipResults.currentIndex];
-        if (!isImageClip(item)) {
-            previewSource = "";
-            return;
-        }
         previewSource = "";
+        previewId = "";
+        if (!clipMode || clipResults.currentIndex < 0)
+            return;
+        const item = filteredClipboard[clipResults.currentIndex];
+        if (!isImageClip(item))
+            return;
+        previewId = item.id;
         previewDims = clipDims(item);
         const path = Quickshell.env("HOME") + "/.cache/quickshell/clip-preview-" + item.id;
+        clipPreview.targetId = item.id;
         clipPreview.target = path;
         clipPreview.command = ["sh", "-c",
             "mkdir -p ~/.cache/quickshell && cliphist decode " + item.id + " > '" + path + "'"];
@@ -332,8 +334,13 @@ PanelWindow {
     Process {
         id: clipPreview
         property string target: ""
+        property string targetId: ""
         onExited: function(exitCode, exitStatus) {
-            if (exitCode === 0 && target.length > 0 && root.clipMode)
+            // Only attach the result if the highlighted image is still the one
+            // we decoded - guards against a stale/transient decode reviving the
+            // card after the selection moved or cleared.
+            if (exitCode === 0 && target.length > 0 && root.clipMode
+                    && clipResults.currentIndex >= 0 && root.previewId === targetId)
                 root.previewSource = "file://" + target;
         }
     }
@@ -890,7 +897,7 @@ PanelWindow {
     // leaves it.
     Rectangle {
         id: previewCard
-        visible: root.clipMode && root.previewSource.length > 0
+        visible: root.clipMode && clipResults.currentIndex >= 0 && root.previewSource.length > 0
         anchors.left: panel.right
         anchors.leftMargin: 16
         anchors.verticalCenter: panel.verticalCenter
