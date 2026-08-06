@@ -8,7 +8,7 @@ is checked once the feature is implemented, deployed, and tested.
   entry pops up a quick-look preview at a proper size; the preview closes as
   soon as another entry is highlighted. Also fix the clipboard list so no entry
   is preselected on open (match the app list).
-- [ ] **Workspaces widget on the status bar** - Add a pill on the far-left of
+- [x] **Workspaces widget on the status bar** - Add a pill on the far-left of
   the bar, matching the right-hand notification button in size and shape. It
   shows only the occupied workspaces (one indicator per workspace that has
   windows), and clicking one switches to that workspace.

@@ -17,6 +17,11 @@ ShellRoot {
         StatusButton {}
     }
 
+    Variants {
+        model: Quickshell.screens
+        WorkspacesButton {}
+    }
+
     NotificationPopups {}
     NotificationCenter {}
     AppLauncher {}
