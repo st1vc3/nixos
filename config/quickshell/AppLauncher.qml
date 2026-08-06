@@ -82,14 +82,14 @@ PanelWindow {
         mode = "clipboard";
         search.text = "";
         clipboardItems = [];
-        clipResults.currentIndex = 0;
+        clipResults.currentIndex = -1;
         clipLister.running = true;
     }
 
     function exitClipboardMode() {
         mode = "apps";
         search.text = "";
-        results.currentIndex = 0;
+        results.currentIndex = -1;
     }
 
     // Re-copy a history entry. cliphist decode resolves the raw payload for the
@@ -103,24 +103,34 @@ PanelWindow {
         clipCopy.startDetached();
     }
 
+    // Nothing is highlighted until the user navigates: from the unselected
+    // state (-1), Down reveals the first item and Up the last, then wraps.
     function moveSelection(delta) {
         const view = clipMode ? clipResults : results;
-        if (delta > 0)
-            view.incrementCurrentIndex();
+        const count = view.count;
+        if (count === 0)
+            return;
+        let index = view.currentIndex;
+        if (index < 0)
+            index = delta > 0 ? 0 : count - 1;
         else
-            view.decrementCurrentIndex();
+            index = (index + delta + count) % count;
+        view.currentIndex = index;
     }
 
     function submit() {
         if (clipMode) {
-            copyClip(filteredClipboard[clipResults.currentIndex]);
+            // With no explicit selection, Enter acts on the top (newest) entry.
+            const index = clipResults.currentIndex >= 0 ? clipResults.currentIndex : 0;
+            copyClip(filteredClipboard[index]);
             return;
         }
         if (clipTriggerArmed) {
             enterClipboardMode();
             return;
         }
-        launch(filteredApplications[results.currentIndex]);
+        const index = results.currentIndex >= 0 ? results.currentIndex : 0;
+        launch(filteredApplications[index]);
     }
 
     function goBackOrClose() {
@@ -134,7 +144,7 @@ PanelWindow {
         if (visible) {
             mode = "apps";
             search.text = "";
-            results.currentIndex = 0;
+            results.currentIndex = -1;
             Qt.callLater(() => search.forceActiveFocus());
         }
     }
@@ -232,9 +242,9 @@ PanelWindow {
 
                             onTextChanged: {
                                 if (root.clipMode)
-                                    clipResults.currentIndex = 0;
+                                    clipResults.currentIndex = -1;
                                 else
-                                    results.currentIndex = 0;
+                                    results.currentIndex = -1;
                             }
                         }
 
@@ -268,7 +278,7 @@ PanelWindow {
                 clip: true
                 spacing: 6
                 model: root.filteredApplications
-                currentIndex: 0
+                currentIndex: -1
                 keyNavigationWraps: true
 
                 delegate: Rectangle {
@@ -356,7 +366,7 @@ PanelWindow {
                 clip: true
                 spacing: 6
                 model: root.filteredClipboard
-                currentIndex: 0
+                currentIndex: -1
                 keyNavigationWraps: true
 
                 delegate: Rectangle {
