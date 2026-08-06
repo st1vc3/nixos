@@ -282,6 +282,8 @@ PanelWindow {
                     color: (ListView.isCurrentItem || rowHover.hovered)
                         ? Colors.glass(0.9)
                         : "transparent"
+                    border.width: ListView.isCurrentItem ? 2 : 0
+                    border.color: Colors.accent
 
                     RowLayout {
                         anchors.fill: parent
@@ -368,6 +370,8 @@ PanelWindow {
                     color: (ListView.isCurrentItem || clipHover.hovered)
                         ? Colors.glass(0.9)
                         : "transparent"
+                    border.width: ListView.isCurrentItem ? 2 : 0
+                    border.color: Colors.accent
 
                     RowLayout {
                         anchors.fill: parent
