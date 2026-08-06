@@ -3,9 +3,10 @@
 // shown, the focused one is filled with the accent colour, and clicking a pill
 // switches Hyprland to that workspace.
 //
-// Hovering the row springs open a notch-style panel underneath (same animated
-// expand) that lists every open window grouped by workspace; clicking an entry
-// jumps to its workspace.
+// Hovering a single pill springs open a notch-style panel underneath it (same
+// animated expand) listing just that workspace's open windows; moving to
+// another pill swaps the panel to that workspace. Clicking a window row jumps
+// to its workspace.
 
 pragma ComponentBehavior: Bound
 
@@ -34,27 +35,31 @@ PanelWindow {
 
     // Sized for the fully expanded panel; the dropdown animates within it while
     // everything around it stays transparent and click-through (see mask).
-    implicitWidth: 360
+    implicitWidth: 400
     implicitHeight: 460
 
     readonly property real stripHeight: 34
 
-    property bool expanded: false
+    // Workspace id whose panel is open (-1 = none), and the left offset of the
+    // pill it hangs under.
+    property int hoveredWs: -1
+    property real dropAnchorX: 12
+    readonly property bool expanded: hoveredWs >= 0
+
     // A short grace period stops the panel collapsing while the pointer travels
-    // between the pills and the dropdown.
+    // between a pill and its dropdown.
     Timer {
         id: collapseTimer
         interval: 160
-        onTriggered: bar.expanded = false
+        onTriggered: bar.hoveredWs = -1
     }
-    function hoverChanged(hovered) {
-        if (hovered) {
-            collapseTimer.stop();
-            bar.expanded = true;
-        } else {
-            collapseTimer.restart();
-        }
+    function openFor(wsId, anchorX) {
+        collapseTimer.stop();
+        bar.dropAnchorX = anchorX;
+        bar.hoveredWs = wsId;
     }
+    function keepOpen() { collapseTimer.stop(); }
+    function scheduleClose() { collapseTimer.restart(); }
 
     // Only the visible shapes take input; the rest of the large surface stays
     // click-through. Collapsed, the dropdown region is empty (height 0).
@@ -86,42 +91,20 @@ PanelWindow {
         }).sort((a, b) => a.id - b.id);
     }
 
-    // Open windows grouped per workspace for the dropdown. Each group is
-    // { wsId, wsName, windows: [{ appClass, title }] }, sorted by workspace id
-    // with windows sorted by class within it.
-    readonly property var groups: {
-        const map = ({});
-        const order = [];
+    // Windows on the currently hovered workspace only, sorted by class.
+    readonly property var hoveredWindows: {
+        if (hoveredWs < 0)
+            return [];
+        const arr = [];
         const tops = Hyprland.toplevels.values;
         for (let i = 0; i < tops.length; i++) {
             const o = tops[i].lastIpcObject;
-            if (!o || !o.workspace || o.workspace.id <= 0)
+            if (!o || !o.workspace || o.workspace.id !== bar.hoveredWs)
                 continue;
-            const id = o.workspace.id;
-            if (!map[id]) {
-                map[id] = { wsId: id, wsName: o.workspace.name || ("" + id), windows: [] };
-                order.push(id);
-            }
-            map[id].windows.push({ appClass: o.class || "?", title: o.title || "" });
+            arr.push({ appClass: o.class || "?", title: o.title || "" });
         }
-        order.sort((a, b) => a - b);
-        return order.map(id => {
-            map[id].windows.sort((a, b) => a.appClass.localeCompare(b.appClass));
-            return map[id];
-        });
-    }
-    readonly property int windowCount: {
-        let n = 0;
-        for (let i = 0; i < groups.length; i++)
-            n += groups[i].windows.length;
-        return n;
-    }
-    // Height needed to show every group header plus its window rows.
-    readonly property real contentHeight: {
-        let h = 12;
-        for (let i = 0; i < groups.length; i++)
-            h += 24 + groups[i].windows.length * 42 + (i < groups.length - 1 ? 8 : 0);
-        return Math.max(h, 44);
+        arr.sort((a, b) => a.appClass.localeCompare(b.appClass));
+        return arr;
     }
 
     function focusWorkspace(id) {
@@ -170,24 +153,28 @@ PanelWindow {
 
                 HoverHandler {
                     id: pillHover
-                    onHoveredChanged: bar.hoverChanged(hovered)
+                    onHoveredChanged: {
+                        if (hovered)
+                            bar.openFor(wsPill.modelData.id, pillRow.x + wsPill.x);
+                        else
+                            bar.scheduleClose();
+                    }
                 }
                 TapHandler { onTapped: bar.focusWorkspace(wsPill.modelData.id) }
             }
         }
     }
 
-    // Notch-style dropdown listing open windows. Grows from the pills' bottom
-    // edge on hover, content fading in just after the shape starts opening.
+    // Notch-style dropdown listing the hovered workspace's windows. Grows from
+    // the pills' bottom edge, aligned under the hovered pill.
     Rectangle {
         id: dropdown
 
-        readonly property real openHeight: Math.min(bar.contentHeight, 420)
+        readonly property real openHeight: Math.min(12 + bar.hoveredWindows.length * 42, 420)
 
-        anchors.top: pillRow.bottom
-        anchors.left: parent.left
-        anchors.leftMargin: 12
-        width: 320
+        y: pillRow.y + pillRow.height
+        x: bar.dropAnchorX
+        width: 300
         height: bar.expanded ? openHeight : 0
         clip: true
         radius: 18
@@ -201,120 +188,81 @@ PanelWindow {
 
         HoverHandler {
             id: dropHover
-            onHoveredChanged: bar.hoverChanged(hovered)
+            onHoveredChanged: {
+                if (hovered)
+                    bar.keepOpen();
+                else
+                    bar.scheduleClose();
+            }
         }
 
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 6
-            spacing: 6
+            spacing: 2
             opacity: bar.expanded ? 1 : 0
             visible: opacity > 0
             Behavior on opacity { NumberAnimation { duration: 180 } }
 
-            // One section per workspace: a header with the workspace badge, then
-            // its windows underneath.
             Repeater {
-                model: bar.groups
+                model: bar.hoveredWindows
 
-                delegate: ColumnLayout {
-                    id: group
+                delegate: Rectangle {
+                    id: winRow
                     required property var modelData
 
-                    readonly property bool isFocused: modelData.wsId === bar.focusedId
-
                     Layout.fillWidth: true
-                    spacing: 2
+                    implicitHeight: 40
+                    radius: 12
+                    color: rowHover.hovered ? Colors.glass(0.9) : "transparent"
 
                     RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
+                        anchors.fill: parent
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 10
+                        spacing: 10
 
-                        Rectangle {
-                            Layout.preferredWidth: 20
-                            Layout.preferredHeight: 20
-                            radius: 10
-                            color: group.isFocused ? Colors.accent : Colors.glass(0.6)
-                            Text {
-                                anchors.centerIn: parent
-                                text: group.modelData.wsName
-                                color: group.isFocused ? Colors.accentText : Colors.subtext
-                                font.pixelSize: 11
-                                font.bold: true
-                            }
+                        Image {
+                            Layout.preferredWidth: 22
+                            Layout.preferredHeight: 22
+                            source: Quickshell.iconPath(winRow.modelData.appClass, "application-x-executable")
+                            sourceSize.width: 22
+                            sourceSize.height: 22
+                            fillMode: Image.PreserveAspectFit
                         }
 
-                        Text {
-                            text: "Workspace"
-                            color: group.isFocused ? Colors.accent : Colors.subtext
-                            font.pixelSize: 11
-                            font.bold: true
-                        }
-
-                        Item { Layout.fillWidth: true }
-                    }
-
-                    Repeater {
-                        model: group.modelData.windows
-
-                        delegate: Rectangle {
-                            id: winRow
-                            required property var modelData
-
+                        ColumnLayout {
                             Layout.fillWidth: true
-                            implicitHeight: 40
-                            radius: 12
-                            color: rowHover.hovered ? Colors.glass(0.9) : "transparent"
+                            spacing: 0
 
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 8
-                                anchors.rightMargin: 10
-                                spacing: 10
-
-                                Image {
-                                    Layout.preferredWidth: 22
-                                    Layout.preferredHeight: 22
-                                    source: Quickshell.iconPath(winRow.modelData.appClass, "application-x-executable")
-                                    sourceSize.width: 22
-                                    sourceSize.height: 22
-                                    fillMode: Image.PreserveAspectFit
-                                }
-
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 0
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: winRow.modelData.appClass
-                                        color: Colors.text
-                                        font.pixelSize: 13
-                                        font.bold: true
-                                        elide: Text.ElideRight
-                                    }
-                                    Text {
-                                        Layout.fillWidth: true
-                                        visible: text.length > 0
-                                        text: winRow.modelData.title
-                                        color: Colors.subtext
-                                        font.pixelSize: 11
-                                        elide: Text.ElideRight
-                                    }
-                                }
+                            Text {
+                                Layout.fillWidth: true
+                                text: winRow.modelData.appClass
+                                color: Colors.text
+                                font.pixelSize: 13
+                                font.bold: true
+                                elide: Text.ElideRight
                             }
-
-                            HoverHandler { id: rowHover }
-                            TapHandler { onTapped: bar.focusWorkspace(group.modelData.wsId) }
+                            Text {
+                                Layout.fillWidth: true
+                                visible: text.length > 0
+                                text: winRow.modelData.title
+                                color: Colors.subtext
+                                font.pixelSize: 11
+                                elide: Text.ElideRight
+                            }
                         }
                     }
+
+                    HoverHandler { id: rowHover }
+                    TapHandler { onTapped: bar.focusWorkspace(bar.hoveredWs) }
                 }
             }
 
             Text {
                 Layout.fillWidth: true
                 Layout.topMargin: 6
-                visible: bar.windowCount === 0
+                visible: bar.hoveredWindows.length === 0
                 horizontalAlignment: Text.AlignHCenter
                 text: "No open windows"
                 color: Colors.subtext
