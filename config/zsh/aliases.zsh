@@ -56,6 +56,22 @@ rebuild_test() {
   rehash
 }
 
+# Full system upgrade: refresh pinned inputs, auto-commit the new lock so Git
+# history records each upgrade, build the new generation as the *boot default*
+# (activated on next reboot, so a bad kernel never touches the running system),
+# then prune generations older than 14 days while keeping recent rollback
+# targets. Reboot afterwards to run the new kernel.
+upgrade() {
+  local flake="$HOME/nixos"
+  ( cd "$flake" && nix flake update ) || return
+  git -C "$flake" add flake.lock
+  git -C "$flake" diff --cached --quiet flake.lock ||
+    git -C "$flake" commit -m "flake.lock: update inputs $(date +%F)" || return
+  sudo nixos-rebuild boot --flake "$flake#nixos" || return
+  sudo nix-collect-garbage --delete-older-than 14d
+  echo "Upgrade staged as boot default. Reboot to run the new kernel."
+}
+
 generations() {
   nixos-rebuild list-generations
 }
