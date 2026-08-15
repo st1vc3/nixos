@@ -49,7 +49,10 @@ PanelWindow {
     readonly property real collapsedWidth: 190
     readonly property real collapsedHeight: 34
     readonly property real expandedWidth: 360
-    readonly property real expandedHeight: 320
+    // Derive the open shape from its contents so six-row months never clip.
+    // The 40px addition gives the same 20px padding above and below that the
+    // panel already has at its left and right edges.
+    readonly property real expandedHeight: content.implicitHeight + 40
 
     SystemClock {
         id: clock
@@ -113,7 +116,7 @@ PanelWindow {
             id: content
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.topMargin: 18
+            anchors.topMargin: 20
             width: root.expandedWidth - 40
             spacing: 12
 
@@ -121,24 +124,25 @@ PanelWindow {
             visible: opacity > 0
             Behavior on opacity { NumberAnimation { duration: 200 } }
 
-            RowLayout {
+            ColumnLayout {
                 Layout.fillWidth: true
+                spacing: 2
 
                 Text {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
                     text: root.pad(clock.hours) + ":" + root.pad(clock.minutes)
                     color: Colors.text
-                    font.pixelSize: 34
+                    font.pixelSize: 42
                     font.bold: true
                 }
 
-                Item { Layout.fillWidth: true }
-
                 Text {
-                    horizontalAlignment: Text.AlignRight
-                    text: Qt.formatDate(clock.date, "ddd\nd MMM")
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    text: Qt.formatDate(clock.date, "dddd, d MMMM")
                     color: Colors.subtext
-                    font.pixelSize: 13
-                    lineHeight: 1.1
+                    font.pixelSize: 14
                 }
             }
 

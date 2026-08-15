@@ -24,6 +24,8 @@ ShellRoot {
 
     NotificationPopups {}
     NotificationCenter {}
+    StatusCenter {}
+    VolumeOsd {}
     AppLauncher {}
     PowerMenu {}
     WallpaperPicker {}

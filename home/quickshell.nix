@@ -25,6 +25,8 @@ in
       # re-copies entries through it.
       home.packages = [
         pkgs.cliphist
+        pkgs.curl
+        pkgs.networkmanager
         pkgs.wl-clipboard
       ];
 

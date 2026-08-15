@@ -19,8 +19,16 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
+    // The stack sits below the notch/bar strip, so the surface has to cover
+    // that offset as well as the cards themselves - sizing it to the column
+    // alone clips the last card against the bottom window edge.
+    readonly property int stackTop: 44
+    readonly property int stackMargin: 12
+
     implicitWidth: 380
-    implicitHeight: Math.max(1, column.implicitHeight + 24)
+    implicitHeight: column.implicitHeight > 0
+        ? root.stackTop + column.implicitHeight + root.stackMargin
+        : 1
 
     // Only the toast stack captures input; the rest of the corner is pass-through.
     mask: Region { item: column }
@@ -29,9 +37,9 @@ PanelWindow {
         id: column
         anchors.top: parent.top
         anchors.right: parent.right
-        anchors.topMargin: 44
-        anchors.rightMargin: 12
-        width: 356
+        anchors.topMargin: root.stackTop
+        anchors.rightMargin: root.stackMargin
+        width: root.implicitWidth - 2 * root.stackMargin
         spacing: 8
 
         Repeater {

@@ -219,6 +219,20 @@ hl.config({
     },
 })
 
+-- Super+wheel and Super+middle-click are shell-level audio controls. Consume
+-- their mouse events at the compositor so the window below never scrolls or
+-- reacts as well, and do not let fullscreen apps or VMs inhibit these binds.
+hl.config({
+    binds = {
+        pass_mouse_when_bound = false,
+        disable_keybind_grabbing = true,
+        -- A nonzero reset window lets the remaining axis events from one fast
+        -- physical scroll fall through after the first bind fires. Handle
+        -- every detent so Super+wheel never scrolls the focused application.
+        scroll_event_delay = 0,
+    },
+})
+
 -- NVIDIA: hardware cursors glitch on nvidia-drm
 hl.config({
     cursor = {
@@ -296,17 +310,18 @@ end
 hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
 
-hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
-hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
+hl.bind(mainMod .. " + mouse_down", hl.dsp.exec_cmd("quickshell ipc call audio raise"))
+hl.bind(mainMod .. " + mouse_up",   hl.dsp.exec_cmd("quickshell ipc call audio lower"))
+hl.bind(mainMod .. " + mouse:274",  hl.dsp.exec_cmd("quickshell ipc call audio mute"))
 
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 -- Laptop multimedia keys for volume and LCD brightness
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),      { locked = true, repeating = true })
-hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),     { locked = true, repeating = true })
-hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),   { locked = true, repeating = true })
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("quickshell ipc call audio raise"),   { locked = true, repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("quickshell ipc call audio lower"),   { locked = true, repeating = true })
+hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("quickshell ipc call audio mute"),    { locked = true })
+hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("quickshell ipc call audio micmute"), { locked = true })
 hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"),                  { locked = true, repeating = true })
 hl.bind("XF86MonBrightnessDown",hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"),                  { locked = true, repeating = true })
 
@@ -409,6 +424,18 @@ required("layer rule blur-qs-center", function()
     hl.layer_rule({
         name = "blur-qs-center",
         match = { namespace = "quickshell-center" },
+        blur = true,
+        ignore_alpha = 0.1,
+        xray = false,
+    })
+end)
+
+-- Keep the Control Center's acrylic treatment identical to the notification
+-- centre: blur the live window content behind it with the same alpha cutoff.
+required("layer rule blur-qs-status-center", function()
+    hl.layer_rule({
+        name = "blur-qs-status-center",
+        match = { namespace = "quickshell-status-center" },
         blur = true,
         ignore_alpha = 0.1,
         xray = false,

@@ -10,12 +10,13 @@ PanelWindow {
     id: root
 
     readonly property int panelWidth: 400
-
     anchors.top: true
     anchors.left: true
     anchors.right: true
     anchors.bottom: true
-    exclusiveZone: 0
+    // Ignore the bar's exclusive zone so the collapsed surface can occupy the
+    // exact status-pill geometry before growing into the notification panel.
+    exclusiveZone: -1
     color: "transparent"
 
     WlrLayershell.namespace: "quickshell-center"
@@ -25,7 +26,13 @@ PanelWindow {
     // While open, the input region covers the monitor so the transparent area
     // can act as a click-away target. Closed, only the off-screen glass belongs
     // to the region, leaving the desktop completely pass-through.
-    mask: Region { item: ShellState.centerOpen ? dismissArea : glass }
+    mask: Region { item: ShellState.centerOpen ? dismissArea : closedInputRegion }
+
+    Item {
+        id: closedInputRegion
+        width: 0
+        height: 0
+    }
 
     Item {
         id: dismissArea
@@ -37,22 +44,38 @@ PanelWindow {
 
     Rectangle {
         id: glass
+        // This is a top-down popover, not a drawer from the screen edge.
         width: root.panelWidth
-        height: parent.height
-        x: ShellState.centerOpen ? root.width - width : root.width
+        // Match the 34px gap above the panel at the bottom edge as well.
+        height: ShellState.centerOpen ? parent.height - 68 : 26
+        x: root.width - 12 - width
+        y: 34
+        clip: true
 
-        color: Colors.glass(0.6)
-        topLeftRadius: 20
-        bottomLeftRadius: 20
+        color: ShellState.centerOpen ? Colors.glass(0.6) : "transparent"
+        radius: ShellState.centerOpen ? 20 : 13
+
+        Behavior on height {
+            NumberAnimation { duration: 340; easing.type: Easing.OutBack; easing.overshoot: 1.1 }
+        }
+        Behavior on color { ColorAnimation { duration: 200 } }
 
         // Consume otherwise-unhandled clicks inside the panel so they do not
-        // reach the click-away layer behind it.
-        TapHandler {}
+        // reach the click-away layer behind it. The gesture policy is what
+        // makes that work: the default (DragThreshold) only takes a passive
+        // grab, which leaves the click free to fall through and close the
+        // panel. Handlers on the panel's own controls still fire.
+        TapHandler { gesturePolicy: TapHandler.ReleaseWithinBounds }
 
         ColumnLayout {
+            id: panelContent
             anchors.fill: parent
             anchors.margins: 16
             spacing: 14
+            opacity: ShellState.centerOpen ? 1 : 0
+            visible: opacity > 0
+
+            Behavior on opacity { NumberAnimation { duration: 200 } }
 
             RowLayout {
                 Layout.fillWidth: true

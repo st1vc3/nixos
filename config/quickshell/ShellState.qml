@@ -13,16 +13,20 @@ Singleton {
     property bool launcherOpen: false
     property bool powerMenuOpen: false
     property bool wallpaperPickerOpen: false
+    property bool statusCenterOpen: false
 
     function closeOverlays() {
         centerOpen = false;
         launcherOpen = false;
         powerMenuOpen = false;
         wallpaperPickerOpen = false;
+        statusCenterOpen = false;
     }
 
     function toggleCenter() {
-        centerOpen = !centerOpen;
+        const opening = !centerOpen;
+        closeOverlays();
+        centerOpen = opening;
     }
 
     function openLauncher() {
@@ -51,5 +55,11 @@ Singleton {
         const opening = !wallpaperPickerOpen;
         closeOverlays();
         wallpaperPickerOpen = opening;
+    }
+
+    function toggleStatusCenter() {
+        const opening = !statusCenterOpen;
+        closeOverlays();
+        statusCenterOpen = opening;
     }
 }

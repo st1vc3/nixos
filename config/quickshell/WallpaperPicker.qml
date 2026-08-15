@@ -105,7 +105,10 @@ PanelWindow {
         color: Colors.glass(0.72)
         border.width: 1
         border.color: Colors.glass(0.95)
-        TapHandler {}
+
+        // Consume clicks inside the panel so they do not reach the click-away
+        // layer behind it; the default gesture policy would let them through.
+        TapHandler { gesturePolicy: TapHandler.ReleaseWithinBounds }
 
         ColumnLayout {
             anchors.fill: parent
