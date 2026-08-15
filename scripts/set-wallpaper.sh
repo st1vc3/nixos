@@ -37,39 +37,55 @@ if ! magick identify -- "$WALLPAPER" >/dev/null 2>&1; then
   exit 1
 fi
 
-# SSH commands do not inherit the graphical environment. Prefer the variables
-# imported into the user service manager by UWSM before inspecting sockets.
-user_environment="$(systemctl --user show-environment 2>/dev/null || true)"
-if [ -z "${WAYLAND_DISPLAY:-}" ]; then
-  WAYLAND_DISPLAY="$(sed -n 's/^WAYLAND_DISPLAY=//p' <<<"$user_environment" | tail -1)"
-fi
-if [ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
-  HYPRLAND_INSTANCE_SIGNATURE="$(sed -n 's/^HYPRLAND_INSTANCE_SIGNATURE=//p' <<<"$user_environment" | tail -1)"
-fi
-
-# If the service environment is unavailable, accept socket discovery only when
-# it is unambiguous. Picking the first or newest socket can target another seat.
-if [ -z "${WAYLAND_DISPLAY:-}" ]; then
-  wayland_sockets=()
-  for sock in "$XDG_RUNTIME_DIR"/wayland-[0-9]*; do
-    [ -S "$sock" ] && wayland_sockets+=("$sock")
-  done
-  if [ "${#wayland_sockets[@]}" -ne 1 ]; then
-    echo "set-wallpaper: expected one Wayland socket, found ${#wayland_sockets[@]}" >&2
-    exit 1
+# SSH commands do not inherit the graphical environment, and at login this
+# service can start before UWSM finalises the compositor's variables and its
+# Wayland socket. Resolve WAYLAND_DISPLAY to a ready socket, preferring the
+# variable UWSM imports into the user service manager and falling back to
+# unambiguous socket discovery (the first or newest socket can target another
+# seat). Returns non-zero until a usable socket exists so the wait loop below
+# can retry - a startup race must not leave the desktop on the black default.
+resolve_wayland_display() {
+  if [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    WAYLAND_DISPLAY="$(systemctl --user show-environment 2>/dev/null \
+      | sed -n 's/^WAYLAND_DISPLAY=//p' | tail -1)"
   fi
-  WAYLAND_DISPLAY="$(basename "${wayland_sockets[0]}")"
-  export WAYLAND_DISPLAY
-fi
 
-if [ ! -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]; then
-  echo "set-wallpaper: Wayland socket does not exist: $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" >&2
+  if [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    local sock display
+    local -a wayland_sockets=()
+    for sock in "$XDG_RUNTIME_DIR"/wayland-[0-9]*; do
+      display="$(basename "$sock")"
+      # Match wayland-<N> exactly so awww's own wayland-<N>-awww-daemon.sock
+      # and the wayland-<N>.lock file are not miscounted as extra seats.
+      [[ "$display" =~ ^wayland-[0-9]+$ ]] || continue
+      [ -S "$sock" ] && wayland_sockets+=("$display")
+    done
+    [ "${#wayland_sockets[@]}" -eq 1 ] && WAYLAND_DISPLAY="${wayland_sockets[0]}"
+  fi
+
+  [ -n "${WAYLAND_DISPLAY:-}" ] && [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]
+}
+
+if ! resolve_wayland_display; then
+  for _ in $(seq 1 100); do
+    sleep 0.1
+    resolve_wayland_display && break
+  done
+fi
+if ! resolve_wayland_display; then
+  echo "set-wallpaper: no Wayland socket became ready within 10 seconds" >&2
   exit 1
 fi
 export WAYLAND_DISPLAY
 
-# hyprctl (used below to pick up the matugen accent in window borders) needs
-# its own instance signature, separate from WAYLAND_DISPLAY.
+# hyprctl (used below to pick up the matugen accent in window borders) needs its
+# own instance signature; prefer the UWSM-imported value before socket lookup.
+if [ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+  HYPRLAND_INSTANCE_SIGNATURE="$(systemctl --user show-environment 2>/dev/null \
+    | sed -n 's/^HYPRLAND_INSTANCE_SIGNATURE=//p' | tail -1)"
+fi
+
+# Fall back to socket discovery when the imported signature is missing or stale.
 if [ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] \
     || [ ! -S "$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket.sock" ]; then
   hypr_instances=()

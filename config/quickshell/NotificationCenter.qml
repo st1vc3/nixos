@@ -45,10 +45,6 @@ PanelWindow {
         topLeftRadius: 20
         bottomLeftRadius: 20
 
-        Behavior on x {
-            NumberAnimation { duration: 320; easing.type: Easing.OutQuint }
-        }
-
         // Consume otherwise-unhandled clicks inside the panel so they do not
         // reach the click-away layer behind it.
         TapHandler {}
@@ -86,6 +82,10 @@ PanelWindow {
                     HoverHandler { id: clearHover }
                     TapHandler { onTapped: Notifications.clearAll() }
                 }
+            }
+
+            DndToggle {
+                Layout.fillWidth: true
             }
 
             DiskWidget {

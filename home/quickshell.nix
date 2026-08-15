@@ -42,6 +42,11 @@ in
         "quickshell/.enabled".text = "";
       };
 
+      # Runtime state the shell writes itself (currently the notification
+      # centre's do-not-disturb flag). Quickshell's FileView creates the file
+      # but not its parent directory, so claim the directory here.
+      home.file.".local/state/quickshell/.keep".text = "";
+
       # colors.json is written at runtime by matugen (the quickshell-colors
       # template is wired into config.toml from home/stivce.nix) and watched live
       # by Colors.qml, so home-manager must not own it as a read-only store

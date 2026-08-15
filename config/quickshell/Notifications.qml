@@ -8,6 +8,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Notifications
 
 Singleton {
@@ -15,6 +16,11 @@ Singleton {
 
     // Full history model for the centre.
     readonly property alias list: server.trackedNotifications
+
+    // Do not disturb: incoming notifications still land in the history, but no
+    // toast is shown while it is on. Backed by the state file below so the mode
+    // survives a config reload or a restart of the shell.
+    property alias dnd: settings.dnd
 
     // A native model avoids rebuilding a Repeater from a JavaScript array every
     // time a toast arrives, which can crash Qt during a rapid notification burst.
@@ -103,6 +109,16 @@ Singleton {
             n.dismiss();
     }
 
+    function toggleDnd() {
+        dnd = !dnd;
+        // Toasts already on screen would otherwise sit there until their own
+        // timers expire; the history keeps every one of them.
+        if (dnd) {
+            activeToastModel.clear();
+            queuedToasts = [];
+        }
+    }
+
     function clearAll() {
         activeToastModel.clear();
         queuedToasts = [];
@@ -131,9 +147,29 @@ Singleton {
             // tracked=true keeps it in trackedNotifications (history) until we
             // explicitly dismiss it; without this it would vanish immediately.
             n.tracked = true;
-            root.addToast(n);
+            if (!root.dnd)
+                root.addToast(n);
             // trackedNotifications is updated after this callback returns.
             Qt.callLater(root.pruneHistory);
+        }
+    }
+
+    // Runtime state, kept out of ~/.config because home-manager owns that tree.
+    // The directory is created by home/quickshell.nix; FileView writes the file
+    // itself on the first toggle (or right away when it is missing).
+    FileView {
+        path: Quickshell.env("HOME") + "/.local/state/quickshell/notifications.json"
+        watchChanges: true
+        onFileChanged: reload()
+        onAdapterUpdated: writeAdapter()
+        onLoadFailed: function (error) {
+            if (error === FileViewError.FileNotFound)
+                writeAdapter();
+        }
+
+        JsonAdapter {
+            id: settings
+            property bool dnd: false
         }
     }
 }

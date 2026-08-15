@@ -42,10 +42,11 @@ PanelWindow {
 
         Text {
             anchors.centerIn: parent
-            text: "" // Nerd Font bell
+            // Nerd Font bell, crossed out while do not disturb is on.
+            text: Notifications.dnd ? "" : ""
             font.family: "JetBrainsMono Nerd Font"
             font.pixelSize: 14
-            color: Colors.text
+            color: Notifications.dnd ? Colors.subtext : Colors.text
         }
 
         Rectangle {
