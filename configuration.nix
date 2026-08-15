@@ -7,6 +7,7 @@
     ./modules/nvidia.nix
     ./modules/desktop.nix
     ./modules/audio.nix
+    ./modules/printing.nix
     ./modules/apps.nix
     ./modules/gaming.nix
     ./modules/snapshots.nix
