@@ -46,17 +46,25 @@ PanelWindow {
         id: glass
         // This is a top-down popover, not a drawer from the screen edge.
         width: root.panelWidth
-        // Match the 34px gap above the panel at the bottom edge as well.
-        height: ShellState.centerOpen ? parent.height - 68 : 26
-        x: root.width - 12 - width
-        y: 34
+        // Match the strip above the panel at the bottom edge as well.
+        readonly property real openHeight: parent.height - 2 * BarMetrics.stripHeight
+        readonly property real closedHeight: BarMetrics.pillHeight
+
+        height: ShellState.centerOpen ? openHeight : closedHeight
+        x: root.width - BarMetrics.edgeMargin - width
+        y: BarMetrics.stripHeight
         clip: true
 
         color: ShellState.centerOpen ? Colors.glass(0.6) : "transparent"
         radius: ShellState.centerOpen ? 20 : 13
 
         Behavior on height {
-            NumberAnimation { duration: 340; easing.type: Easing.OutBack; easing.overshoot: 1.1 }
+            // Deliberately not Easing.OutBack: this panel grows the height of
+            // the screen, and any back-ease overshoots by a fraction of the
+            // distance travelled, so it swings past its resting height and
+            // springs back. OutQuint decelerates just as sharply but never
+            // exceeds the target - the panel simply arrives at its size.
+            NumberAnimation { duration: 340; easing.type: Easing.OutQuint }
         }
         Behavior on color { ColorAnimation { duration: 200 } }
 

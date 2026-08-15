@@ -47,7 +47,10 @@ PanelWindow {
     property bool expanded: false
 
     readonly property real collapsedWidth: 190
-    readonly property real collapsedHeight: 34
+    // The notch hangs to the same line the bar pills end on, so its lower edge
+    // and theirs form one horizontal line across the top of the screen. Windows
+    // then start a gaps_out below that shared line.
+    readonly property real collapsedHeight: BarMetrics.stripHeight
     readonly property real expandedWidth: 360
     // Derive the open shape from its contents so six-row months never clip.
     // The 40px addition gives the same 20px padding above and below that the

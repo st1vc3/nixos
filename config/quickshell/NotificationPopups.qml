@@ -22,8 +22,10 @@ PanelWindow {
     // The stack sits below the notch/bar strip, so the surface has to cover
     // that offset as well as the cards themselves - sizing it to the column
     // alone clips the last card against the bottom window edge.
-    readonly property int stackTop: 44
-    readonly property int stackMargin: 12
+    // Toasts line up with the top edge of a tiled window: below the bar strip
+    // by the same gutter Hyprland leaves around windows.
+    readonly property int stackTop: BarMetrics.stripHeight + BarMetrics.outerGap
+    readonly property int stackMargin: BarMetrics.edgeMargin
 
     implicitWidth: 380
     implicitHeight: column.implicitHeight > 0

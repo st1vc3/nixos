@@ -35,15 +35,18 @@ PanelWindow {
 
     // Sized for the fully expanded panel; the dropdown animates within it while
     // everything around it stays transparent and click-through (see mask).
-    implicitWidth: 400
-    implicitHeight: 460
+    // Wide enough for a full row of padded pills plus the dropdown hanging
+    // under the last of them, so the extra width costs nothing.
+    implicitWidth: 720
+    implicitHeight: BarMetrics.stripHeight + maxDropHeight
 
-    readonly property real stripHeight: 34
+    readonly property real stripHeight: BarMetrics.stripHeight
+    readonly property real maxDropHeight: 420
 
     // Workspace id whose panel is open (-1 = none), and the left offset of the
     // pill it hangs under.
     property int hoveredWs: -1
-    property real dropAnchorX: 12
+    property real dropAnchorX: BarMetrics.edgeMargin
     readonly property bool expanded: hoveredWs >= 0
 
     // A short grace period stops the panel collapsing while the pointer travels
@@ -119,9 +122,10 @@ PanelWindow {
         id: pillRow
         anchors.top: parent.top
         anchors.left: parent.left
-        anchors.leftMargin: 12
-        height: bar.stripHeight
-        spacing: 6
+        anchors.topMargin: BarMetrics.edgeMargin
+        anchors.leftMargin: BarMetrics.edgeMargin
+        height: BarMetrics.pillHeight
+        spacing: BarMetrics.pillGap
 
         Repeater {
             model: bar.occupied
@@ -133,9 +137,11 @@ PanelWindow {
                 readonly property bool isFocused: modelData.id === bar.focusedId
 
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.max(30, label.implicitWidth + 18)
-                height: 26
-                radius: 13
+                // Same bubble as the status island's pill: padded on both
+                // sides, never narrower than it is tall for single-digit names.
+                width: Math.max(BarMetrics.pillHeight, label.implicitWidth + 2 * BarMetrics.pillPaddingH)
+                height: BarMetrics.pillHeight
+                radius: BarMetrics.pillRadius
                 color: isFocused
                     ? Colors.accent
                     : (pillHover.hovered ? Colors.glass(0.85) : Colors.glass(0.5))
@@ -147,7 +153,7 @@ PanelWindow {
                     anchors.centerIn: parent
                     text: wsPill.modelData.name
                     color: wsPill.isFocused ? Colors.accentText : Colors.text
-                    font.pixelSize: 13
+                    font.pixelSize: BarMetrics.labelSize
                     font.bold: true
                 }
 
@@ -170,10 +176,12 @@ PanelWindow {
     Rectangle {
         id: dropdown
 
-        readonly property real openHeight: Math.min(12 + bar.hoveredWindows.length * 42, 420)
+        readonly property real openHeight: Math.min(12 + bar.hoveredWindows.length * 42, bar.maxDropHeight)
 
         y: pillRow.y + pillRow.height
-        x: bar.dropAnchorX
+        // Hangs under the hovered pill, held inside the surface so a pill near
+        // the right end does not push the panel off the window.
+        x: Math.min(bar.dropAnchorX, bar.width - width - BarMetrics.edgeMargin)
         width: 300
         height: bar.expanded ? openHeight : 0
         clip: true
@@ -183,7 +191,9 @@ PanelWindow {
         border.color: Colors.glass(0.95)
 
         Behavior on height {
-            NumberAnimation { duration: 320; easing.type: Easing.OutBack; easing.overshoot: 1.05 }
+            // Grows to its size without springing past it, like the other
+            // panels that drop out of the bar.
+            NumberAnimation { duration: 320; easing.type: Easing.OutQuint }
         }
 
         HoverHandler {

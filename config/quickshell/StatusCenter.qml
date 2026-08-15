@@ -13,11 +13,11 @@ PanelWindow {
     id: root
     anchors.top: true
     anchors.right: true
-    margins.right: 12
+    margins.right: BarMetrics.edgeMargin
     exclusiveZone: -1
     color: "transparent"
     implicitWidth: 380
-    implicitHeight: 728
+    implicitHeight: BarMetrics.stripHeight + panel.openHeight
     visible: true
 
     WlrLayershell.namespace: "quickshell-status-center"
@@ -60,17 +60,23 @@ PanelWindow {
         id: panel
         anchors.top: parent.top
         anchors.right: parent.right
-        anchors.topMargin: 34
+        anchors.topMargin: BarMetrics.stripHeight
         // Keep the panel horizontally settled beneath the button. Animating
         // this width while right-anchored makes it look like a side drawer.
         width: parent.width
-        height: ShellState.statusCenterOpen ? 690 : 26
+        readonly property real openHeight: 690
+        readonly property real closedHeight: BarMetrics.pillHeight
+
+        height: ShellState.statusCenterOpen ? openHeight : closedHeight
         radius: ShellState.statusCenterOpen ? 20 : 13
         clip: true
         color: ShellState.statusCenterOpen ? Colors.glass(0.6) : "transparent"
 
         Behavior on height {
-            NumberAnimation { duration: 340; easing.type: Easing.OutBack; easing.overshoot: 1.1 }
+            // No back-ease here either, for the same reason as the
+            // notification centre: it grows far enough that an overshoot reads
+            // as a bounce rather than a spring.
+            NumberAnimation { duration: 340; easing.type: Easing.OutQuint }
         }
         Behavior on color { ColorAnimation { duration: 200 } }
 

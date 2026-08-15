@@ -91,6 +91,9 @@ hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 hl.config({
     general = {
         gaps_in  = 5,
+        -- Mirrored by `outerGap` in config/quickshell/BarMetrics.qml: the shell's
+        -- top-bar pills are inset by this same value so the space around them
+        -- matches the space around a tiled window. Change both together.
         gaps_out = 10,
 
         border_size = 2,
