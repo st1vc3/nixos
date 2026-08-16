@@ -33,9 +33,13 @@
     # Neither browser is in nixpkgs yet (Zen is stuck on Firefox-fork
     # packaging issues, Helium's PR has been pending for a while), so both
     # come from community flakes that repackage the official binaries.
+    # Zen follows the unstable nixpkgs rather than the stable one the rest of
+    # the system uses: upstream packages against nixos-unstable and reached for
+    # ffmpeg_9, which does not exist in 26.05, breaking evaluation outright on
+    # the 2026-08-16 input refresh.
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     helium = {
