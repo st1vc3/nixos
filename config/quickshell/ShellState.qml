@@ -14,6 +14,7 @@ Singleton {
     property bool powerMenuOpen: false
     property bool wallpaperPickerOpen: false
     property bool statusCenterOpen: false
+    property bool cheatsheetOpen: false
 
     function closeOverlays() {
         centerOpen = false;
@@ -21,6 +22,7 @@ Singleton {
         powerMenuOpen = false;
         wallpaperPickerOpen = false;
         statusCenterOpen = false;
+        cheatsheetOpen = false;
     }
 
     function toggleCenter() {
@@ -61,5 +63,16 @@ Singleton {
         const opening = !statusCenterOpen;
         closeOverlays();
         statusCenterOpen = opening;
+    }
+
+    function openCheatsheet() {
+        closeOverlays();
+        cheatsheetOpen = true;
+    }
+
+    function toggleCheatsheet() {
+        const opening = !cheatsheetOpen;
+        closeOverlays();
+        cheatsheetOpen = opening;
     }
 }

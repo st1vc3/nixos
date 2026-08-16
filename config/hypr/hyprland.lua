@@ -292,6 +292,10 @@ required("binding " .. mainMod .. "+F", function()
     hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 end)
 hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd("quickshell ipc call powermenu toggle"))
+-- Alt+Escape mirrors the macosx repo's Option+Escape shortcut overlay. Its
+-- contents are written in config/quickshell/Cheatsheet.qml; the bindings below
+-- stay the source of truth, so update both together.
+hl.bind("ALT + ESCAPE", hl.dsp.exec_cmd("quickshell ipc call cheatsheet toggle"))
 hl.bind("ALT + SHIFT + 3", hl.dsp.exec_cmd("$HOME/.local/bin/misc/screenshot-output-save"))
 hl.bind("ALT + SHIFT + 4", hl.dsp.exec_cmd("$HOME/.local/bin/misc/screenshot-region"))
 hl.bind("ALT + SHIFT + 5", hl.dsp.exec_cmd("hyprquickframe"))
@@ -415,6 +419,7 @@ for name, ns in pairs({
     ["blur-qs-launcher"]      = "quickshell-launcher",
     ["blur-qs-power"]         = "quickshell-power",
     ["blur-qs-wallpaper"]     = "quickshell-wallpaper",
+    ["blur-qs-cheatsheet"]    = "quickshell-cheatsheet",
 }) do
     required("layer rule " .. name, function()
         hl.layer_rule({ name = name, match = { namespace = ns }, blur = true, ignore_alpha = 0.1, xray = false })
