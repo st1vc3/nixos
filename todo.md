@@ -18,7 +18,7 @@ is checked once the feature is implemented, deployed, and tested.
   SSH mode; the host you then type is opened as an SSH session.
 - [x] **Nix package search mode** - Typing `nsearch` switches the launcher into
   a Nix package search mode that queries nixpkgs and lists the matches.
-- [x] **YouTube search** - `yt <query>` opens the default browser on YouTube
-  search results for the query.
-- [x] **Google search** - `ggl <query>` opens the default browser on Google
-  search results for the query.
+- [x] **YouTube search** - Typing `yt` switches the launcher into a YouTube
+  mode; the query you then type opens in the default browser.
+- [x] **Google search** - Typing `ggl` switches the launcher into a Google
+  mode; the query you then type opens in the default browser.

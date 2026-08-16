@@ -29,4 +29,5 @@ ShellRoot {
     AppLauncher {}
     PowerMenu {}
     WallpaperPicker {}
+    Cheatsheet {}
 }
