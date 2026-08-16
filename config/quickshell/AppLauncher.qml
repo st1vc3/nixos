@@ -1,14 +1,16 @@
 // Centered application launcher backed by Quickshell's native desktop-entry
 // model. Opened through IPC by Hyprland's Super+Space binding.
 //
-// Beyond launching apps the search box doubles as a command bar. Typing a
-// keyword and pressing Enter switches into a focused mode:
+// Beyond launching apps the search box doubles as a command bar. The commands
+// are listed among the app results as soon as anything is typed, so they can
+// be found by browsing; typing a keyword and pressing Enter switches into the
+// matching focused mode, where the search box belongs to that mode until Esc
+// goes back:
 //   cli      clipboard manager (cliphist history, text + image quick-look)
 //   ssh      SSH connector (known hosts, opens a terminal session)
 //   nsearch  Nix package search (queries nixpkgs, copies the attribute)
-// and two inline web searches act on Enter without a mode switch:
-//   yt <q>   open YouTube results for <q> in the default browser
-//   ggl <q>  open Google results for <q> in the default browser
+//   yt       YouTube search (opens results in the default browser)
+//   ggl      Google search (opens results in the default browser)
 //
 // No row is ever preselected: the highlight only appears once the user
 // navigates, and Enter falls back to the top result.
@@ -27,59 +29,72 @@ PanelWindow {
     readonly property int panelWidth: 680
     readonly property int panelHeight: 620
 
-    // "apps" | "clipboard" | "ssh" | "nsearch".
+    // "apps" | "clipboard" | "ssh" | "nsearch" | "youtube" | "google".
     property string mode: "apps"
     readonly property bool clipMode: mode === "clipboard"
 
     readonly property string query: search.text.trim()
 
+    // --- Web search modes ---------------------------------------------------
+    // Engines, command list and icons all live in the LauncherCommands
+    // singleton so the cheat sheet renders exactly what the launcher offers.
+    readonly property var webEngines: LauncherCommands.engines
+    readonly property var webEngine: webEngines[mode] || null
+    readonly property bool webMode: webEngine !== null
+    readonly property string iconFont: LauncherCommands.iconFont
+
+    function modeIcon(target) { return LauncherCommands.icon(target); }
+    function modeName(target) { return LauncherCommands.label(target); }
+    function plural(n, word) {
+        return n + " " + word + (n === 1 ? "" : "s");
+    }
+
     // --- Applications -------------------------------------------------------
     readonly property var applications: DesktopEntries.applications.values
         .filter(entry => !entry.noDisplay)
-        .sort((a, b) => a.name.localeCompare(b.name))
+        .sort((a, b) => b.name.localeCompare(a.name))
     readonly property var filteredApplications: {
         const terms = search.text.toLowerCase().trim().split(/\s+/).filter(Boolean);
         if (terms.length === 0)
             return applications;
+        // Name only: matching the description too made "p" pull in Discord for
+        // "Platform", which buries what was actually being looked for.
         return applications.filter(entry => {
-            const haystack = [entry.name, entry.genericName, entry.comment, entry.id]
-                .filter(Boolean).join(" ").toLowerCase();
-            return terms.every(term => haystack.includes(term));
+            const name = (entry.name || "").toLowerCase();
+            return terms.every(term => name.includes(term));
         });
     }
 
-    // In app mode the query is parsed into a command descriptor so the footer
-    // can preview what Enter does and submit() can act on it. Recognised
-    // commands take over the panel with a single action card instead of the
-    // app list.
-    readonly property var appAction: {
-        const q = root.query;
-        const lower = q.toLowerCase();
-        if (lower === "cli")
-            return { type: "mode", target: "clipboard", label: "Open clipboard history" };
-        if (lower === "ssh")
-            return { type: "mode", target: "ssh", label: "SSH to a host" };
-        if (lower === "nsearch")
-            return { type: "mode", target: "nsearch", label: "Search Nix packages" };
-        if (lower === "yt" || lower.startsWith("yt ")) {
-            const term = q.slice(2).trim();
-            return {
-                type: "web", ready: term.length > 0,
-                url: "https://www.youtube.com/results?search_query=" + encodeURIComponent(term),
-                label: term.length ? "Search YouTube for “" + term + "”" : "Type a YouTube query"
-            };
-        }
-        if (lower === "ggl" || lower.startsWith("ggl ")) {
-            const term = q.slice(3).trim();
-            return {
-                type: "web", ready: term.length > 0,
-                url: "https://www.google.com/search?q=" + encodeURIComponent(term),
-                label: term.length ? "Search Google for “" + term + "”" : "Type a Google query"
-            };
-        }
-        return { type: "apps" };
+    // --- Commands -----------------------------------------------------------
+    // The modes double as search results: they are listed alongside apps so
+    // the keywords are discoverable without having to know them already.
+    readonly property var commands: LauncherCommands.list
+
+    // Only once something is typed: an empty box stays a plain app list, so
+    // Enter on it still launches the first app rather than a command.
+    readonly property var filteredCommands: {
+        const terms = search.text.toLowerCase().trim().split(/\s+/).filter(Boolean);
+        if (terms.length === 0)
+            return [];
+        const q = search.text.toLowerCase().trim();
+        return commands
+            .filter(cmd => {
+                const haystack = (cmd.keyword + " " + cmd.label).toLowerCase();
+                return terms.every(term => haystack.includes(term));
+            })
+            // An exactly typed keyword outranks a merely prefixed one, so
+            // "ssh" puts SSH on top even though "nsearch" also contains it.
+            // Ties fall back to declaration order: sort() is not required to
+            // be stable here, and without it equal ranks shuffle per keystroke.
+            .sort((a, b) => {
+                const rank = cmd => cmd.keyword === q ? 0 : (cmd.keyword.startsWith(q) ? 1 : 2);
+                return rank(a) - rank(b) || a.order - b.order;
+            });
     }
-    readonly property bool actionActive: mode === "apps" && appAction.type !== "apps"
+
+    // Commands rank above apps: they are few, exactly matched, and the app
+    // list is long enough to bury them otherwise.
+    readonly property var appRows: filteredCommands.concat(filteredApplications)
 
     // --- Clipboard (cliphist) ----------------------------------------------
     // Each item is { id, preview }: id is cliphist's numeric row key, preview
@@ -143,11 +158,23 @@ PanelWindow {
         entry.execute();
     }
 
-    function openUrl(url) {
-        if (!url)
+    // App-mode rows are either a command (switch mode) or a desktop entry.
+    function activateRow(item) {
+        if (!item)
+            return;
+        if (item.isCommand)
+            switchMode(item.target);
+        else
+            launch(item);
+    }
+
+    // Run the current query through the active engine. Empty queries are a
+    // no-op so Enter cannot open a bare results page.
+    function webSearch() {
+        if (!webEngine || root.query.length === 0)
             return;
         close();
-        webOpen.command = ["xdg-open", url];
+        webOpen.command = ["xdg-open", webEngine.base + encodeURIComponent(root.query)];
         webOpen.startDetached();
     }
 
@@ -167,6 +194,7 @@ PanelWindow {
             nixSearching = false;
             nixResults.currentIndex = -1;
         }
+        // Web modes need no loader: the query is typed after the switch.
     }
 
     function exitToApps() {
@@ -227,14 +255,18 @@ PanelWindow {
 
     // Nothing is highlighted until the user navigates: from the unselected
     // state (-1), Down reveals the first item and Up the last, then wraps.
+    // Web modes have no list, so there is nothing to move through.
     function activeView() {
         if (mode === "clipboard") return clipResults;
         if (mode === "ssh") return sshResults;
         if (mode === "nsearch") return nixResults;
+        if (webMode) return null;
         return results;
     }
     function moveSelection(delta) {
         const view = activeView();
+        if (!view)
+            return;
         const count = view.count;
         if (count === 0)
             return;
@@ -248,8 +280,20 @@ PanelWindow {
     function indexOrFirst(view) {
         return view.currentIndex >= 0 ? view.currentIndex : 0;
     }
+    // Replacing a view's model makes it adopt a current item again, so the
+    // "nothing preselected" reset has to run once the model binding has
+    // settled rather than alongside it.
+    function clearSelection() {
+        const view = activeView();
+        if (view)
+            view.currentIndex = -1;
+    }
 
     function submit() {
+        if (webMode) {
+            webSearch();
+            return;
+        }
         if (mode === "clipboard") {
             copyClip(filteredClipboard[indexOrFirst(clipResults)]);
             return;
@@ -262,17 +306,7 @@ PanelWindow {
             copyPackage(nixItems[indexOrFirst(nixResults)]);
             return;
         }
-        const a = appAction;
-        if (a.type === "mode") {
-            switchMode(a.target);
-            return;
-        }
-        if (a.type === "web") {
-            if (a.ready)
-                openUrl(a.url);
-            return;
-        }
-        launch(filteredApplications[indexOrFirst(results)]);
+        activateRow(appRows[indexOrFirst(results)]);
     }
 
     function goBackOrClose() {
@@ -436,22 +470,26 @@ PanelWindow {
                     anchors.rightMargin: 16
                     spacing: 12
 
+                    // Every cell fills the bar height and centres its own text:
+                    // sizing cells to their font metrics instead would give the
+                    // icon, the query and the counter three different baselines.
                     Text {
-                        text: root.clipMode ? "\u{1F5B9}"
-                            : root.mode === "ssh" ? "»"
-                            : root.mode === "nsearch" ? "❄"
-                            : "⌕"
+                        Layout.fillHeight: true
+                        text: root.modeIcon(root.mode)
                         color: root.mode === "apps" ? Colors.subtext : Colors.accent
-                        font.pixelSize: 22
+                        font.family: root.iconFont
+                        font.pixelSize: 18
+                        verticalAlignment: Text.AlignVCenter
                     }
 
                     Item {
                         Layout.fillWidth: true
-                        implicitHeight: 24
+                        Layout.fillHeight: true
 
                         TextInput {
                             id: search
                             anchors.fill: parent
+                            verticalAlignment: TextInput.AlignVCenter
                             color: Colors.text
                             selectionColor: Colors.accent
                             selectedTextColor: Colors.accentText
@@ -465,6 +503,8 @@ PanelWindow {
                             Keys.onEnterPressed: root.submit()
 
                             onTextChanged: {
+                                if (root.webMode)
+                                    return;
                                 if (root.clipMode)
                                     clipResults.currentIndex = -1;
                                 else if (root.mode === "ssh")
@@ -474,15 +514,18 @@ PanelWindow {
                                     nixDebounce.restart();
                                 } else
                                     results.currentIndex = -1;
+                                Qt.callLater(root.clearSelection);
                             }
                         }
 
                         Text {
                             anchors.fill: parent
+                            verticalAlignment: Text.AlignVCenter
                             visible: search.text.length === 0
                             text: root.clipMode ? "Search clipboard history"
                                 : root.mode === "ssh" ? "Type a host to SSH into"
                                 : root.mode === "nsearch" ? "Search Nix packages"
+                                : root.webMode ? "Search " + root.webEngine.name
                                 : "Type to search applications"
                             color: Colors.subtext
                             font.pixelSize: 14
@@ -490,19 +533,24 @@ PanelWindow {
                     }
 
                     Text {
-                        text: root.clipMode ? root.filteredClipboard.length + " items"
-                            : root.mode === "ssh" ? root.filteredSshHosts.length + " hosts"
-                            : root.mode === "nsearch" ? (root.nixSearching ? "Searching…" : root.nixItems.length + " packages")
-                            : root.actionActive ? "" : root.filteredApplications.length + " apps"
+                        Layout.fillHeight: true
+                        verticalAlignment: Text.AlignVCenter
+                        text: root.clipMode ? root.plural(root.filteredClipboard.length, "item")
+                            : root.mode === "ssh" ? root.plural(root.filteredSshHosts.length, "host")
+                            : root.mode === "nsearch" ? (root.nixSearching ? "Searching…" : root.plural(root.nixItems.length, "package"))
+                            : root.webMode ? root.webEngine.name
+                            : root.filteredCommands.length > 0 ? root.plural(root.appRows.length, "result")
+                            : root.plural(root.filteredApplications.length, "app")
                         color: Colors.subtext
                         font.pixelSize: 12
                     }
                 }
             }
 
-            // Command action card (yt / ggl / mode triggers in app mode).
+            // Web search mode: no list to navigate, the typed query is the
+            // action, so the panel just previews what Enter will open.
             Rectangle {
-                visible: root.actionActive
+                visible: root.webMode
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 radius: 16
@@ -510,24 +558,31 @@ PanelWindow {
 
                 ColumnLayout {
                     anchors.centerIn: parent
+                    width: parent.width - 40
                     spacing: 10
 
                     Text {
                         Layout.alignment: Qt.AlignHCenter
-                        text: root.appAction.type === "web" ? "\u{1F310}" : "→"
+                        text: root.webEngine ? root.webEngine.icon : ""
                         color: Colors.accent
+                        font.family: root.iconFont
                         font.pixelSize: 40
                     }
                     Text {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: root.appAction.label || ""
+                        Layout.fillWidth: true
+                        text: !root.webEngine ? ""
+                            : root.query.length > 0
+                                ? "Search " + root.webEngine.name + " for “" + root.query + "”"
+                                : "Type a " + root.webEngine.name + " query"
                         color: Colors.text
                         font.pixelSize: 18
                         font.bold: true
+                        elide: Text.ElideRight
+                        horizontalAlignment: Text.AlignHCenter
                     }
                     Text {
                         Layout.alignment: Qt.AlignHCenter
-                        visible: root.appAction.type !== "web" || root.appAction.ready
+                        visible: root.query.length > 0
                         text: "Press Enter"
                         color: Colors.subtext
                         font.pixelSize: 13
@@ -535,15 +590,16 @@ PanelWindow {
                 }
             }
 
-            // Application results.
+            // Command and application results, in one list so the arrow keys
+            // run through both.
             ListView {
                 id: results
-                visible: root.mode === "apps" && !root.actionActive
+                visible: root.mode === "apps"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
                 spacing: 6
-                model: root.filteredApplications
+                model: root.appRows
                 currentIndex: -1
                 keyNavigationWraps: true
 
@@ -551,6 +607,7 @@ PanelWindow {
                     id: appRow
                     required property var modelData
                     required property int index
+                    readonly property bool isCommand: modelData.isCommand === true
 
                     width: ListView.view ? ListView.view.width : 0
                     height: 60
@@ -567,13 +624,33 @@ PanelWindow {
                         anchors.rightMargin: 12
                         spacing: 12
 
-                        Image {
+                        // Commands carry a glyph where apps carry their icon;
+                        // one of the two fills the same 38px slot.
+                        Item {
                             Layout.preferredWidth: 38
                             Layout.preferredHeight: 38
-                            source: Quickshell.iconPath(appRow.modelData.icon, "application-x-executable")
-                            sourceSize.width: 38
-                            sourceSize.height: 38
-                            fillMode: Image.PreserveAspectFit
+
+                            Image {
+                                anchors.fill: parent
+                                visible: !appRow.isCommand
+                                source: appRow.isCommand
+                                    ? ""
+                                    : Quickshell.iconPath(appRow.modelData.icon, "application-x-executable")
+                                sourceSize.width: 38
+                                sourceSize.height: 38
+                                fillMode: Image.PreserveAspectFit
+                            }
+
+                            Text {
+                                anchors.fill: parent
+                                visible: appRow.isCommand
+                                text: appRow.isCommand ? appRow.modelData.glyph : ""
+                                color: Colors.accent
+                                font.family: root.iconFont
+                                font.pixelSize: 20
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
                         }
 
                         ColumnLayout {
@@ -582,7 +659,9 @@ PanelWindow {
 
                             Text {
                                 Layout.fillWidth: true
-                                text: appRow.modelData.name
+                                text: appRow.isCommand
+                                    ? appRow.modelData.label
+                                    : appRow.modelData.name
                                 color: Colors.text
                                 font.pixelSize: 16
                                 font.bold: true
@@ -592,10 +671,30 @@ PanelWindow {
                             Text {
                                 Layout.fillWidth: true
                                 visible: text.length > 0
-                                text: appRow.modelData.genericName || appRow.modelData.comment || ""
+                                text: appRow.isCommand
+                                    ? appRow.modelData.hint
+                                    : (appRow.modelData.genericName || appRow.modelData.comment || "")
                                 color: Colors.subtext
                                 font.pixelSize: 13
                                 elide: Text.ElideRight
+                            }
+                        }
+
+                        // Keyword chip: teaches the shortcut that reaches this
+                        // command directly next time.
+                        Rectangle {
+                            visible: appRow.isCommand
+                            implicitWidth: keyword.implicitWidth + 16
+                            implicitHeight: 22
+                            radius: 11
+                            color: Colors.glass(0.95)
+
+                            Text {
+                                id: keyword
+                                anchors.centerIn: parent
+                                text: appRow.isCommand ? appRow.modelData.keyword : ""
+                                color: Colors.subtext
+                                font.pixelSize: 12
                             }
                         }
 
@@ -611,12 +710,12 @@ PanelWindow {
                         id: rowHover
                         onHoveredChanged: if (hovered) results.currentIndex = appRow.index
                     }
-                    TapHandler { onTapped: root.launch(appRow.modelData) }
+                    TapHandler { onTapped: root.activateRow(appRow.modelData) }
                 }
 
                 Text {
                     anchors.centerIn: parent
-                    visible: root.filteredApplications.length === 0
+                    visible: root.appRows.length === 0
                     text: "No matching applications"
                     color: Colors.subtext
                     font.pixelSize: 14
@@ -657,9 +756,10 @@ PanelWindow {
                         spacing: 12
 
                         Text {
-                            text: root.isImageClip(clipRow.modelData) ? "\u{1F5BC}" : "\u{1F5B9}"
+                            text: root.isImageClip(clipRow.modelData) ? "\uF03E" : "\uF0F6"
                             color: Colors.subtext
-                            font.pixelSize: 16
+                            font.family: root.iconFont
+                            font.pixelSize: 14
                         }
 
                         Text {
@@ -727,9 +827,10 @@ PanelWindow {
                         spacing: 12
 
                         Text {
-                            text: "»"
+                            text: "\uF233"
                             color: Colors.subtext
-                            font.pixelSize: 16
+                            font.family: root.iconFont
+                            font.pixelSize: 14
                         }
 
                         Text {
@@ -802,9 +903,10 @@ PanelWindow {
                         spacing: 12
 
                         Text {
-                            text: "❄"
+                            text: "\uF313"
                             color: Colors.subtext
-                            font.pixelSize: 16
+                            font.family: root.iconFont
+                            font.pixelSize: 14
                         }
 
                         ColumnLayout {
@@ -873,19 +975,16 @@ PanelWindow {
                     text: root.clipMode ? "↑↓ Navigate   Enter Copy   Esc Back"
                         : root.mode === "ssh" ? "↑↓ Navigate   Enter Connect   Esc Back"
                         : root.mode === "nsearch" ? "↑↓ Navigate   Enter Copy attribute   Esc Back"
-                        : root.actionActive ? "↵ " + root.appAction.label
+                        : root.webMode ? "Enter Search   Esc Back"
                         : "↑↓ Navigate   Enter Launch   Esc Close"
-                    color: root.actionActive ? Colors.accent : Colors.subtext
+                    color: Colors.subtext
                     font.pixelSize: 12
                     Layout.fillWidth: true
                     elide: Text.ElideRight
                 }
 
                 Text {
-                    text: root.clipMode ? "Clipboard"
-                        : root.mode === "ssh" ? "SSH"
-                        : root.mode === "nsearch" ? "Nix"
-                        : "Quickshell"
+                    text: root.modeName(root.mode)
                     color: Colors.accent
                     font.pixelSize: 12
                     font.bold: true
