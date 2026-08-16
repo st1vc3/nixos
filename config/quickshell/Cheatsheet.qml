@@ -8,10 +8,14 @@
 // toggle, so this one toggles too: Alt+Escape opens it, Alt+Escape or Esc
 // closes it.
 //
-// The shortcut sections below are written by hand and config/hypr/hyprland.lua
-// stays the source of truth for what the keys actually do - keep them in step.
-// The Launcher section is the exception: it is generated from the same
-// LauncherCommands table the launcher itself renders, so it cannot drift.
+// Sources of truth for the rows below, all of which stay authoritative:
+//   Hyprland   config/hypr/hyprland.lua
+//   Neovim     config/nvim/lua/keys.lua and lua/plugins/
+//   Terminal   config/zsh/bindings.zsh
+//   Herdr      config/herdr/config.toml
+// Keep them in step by hand. The Launcher section is the exception: it is
+// generated from the same LauncherCommands table the launcher itself renders,
+// so it cannot drift.
 
 pragma ComponentBehavior: Bound
 
@@ -24,22 +28,44 @@ import Quickshell.Wayland
 PanelWindow {
     id: root
 
-    readonly property int panelWidth: 1240
+    // Clamped to the screen the way the reference overlay is, so the panel
+    // still fits when this config runs on the laptop rather than the 4K panel.
+    readonly property int panelWidth:
+        Math.min(1820, (screen ? screen.width : 1820) - 80)
+    readonly property int keyColumnWidth: 150
+    readonly property int rowHeight: 32
+    readonly property int bodySize: 14
+
+    readonly property int columnSpacing: 34
+    // Columns are sized explicitly and evenly. Left to fillWidth alone the
+    // layout apportions by implicit content width, which starved the last
+    // column until its descriptions elided.
+    readonly property int columnWidth:
+        (panelWidth - 56 - columnSpacing * 3) / 4
 
     // Sections are assigned to a column by hand rather than flowed into a
     // grid: a grid sizes every row to its tallest section, which leaves large
-    // voids under the short ones. Split this way each column carries 11 rows.
+    // voids under the short ones. Split this way each column carries 13-14
+    // rows, so the columns end at roughly the same height.
     readonly property var columnA: [
         {
             title: "Applications",
             rows: [
                 { keys: "Super Return", text: "Kitty terminal" },
                 { keys: "Super Shift Return", text: "Herdr in Kitty" },
-                { keys: "Super E", text: "File manager" },
+                { keys: "Super E", text: "Files (Nautilus)" },
                 { keys: "Super Space", text: "Application launcher" }
             ]
         },
         { title: "Launcher", rows: root.launcherRows },
+        {
+            title: "Capture",
+            rows: [
+                { keys: "Alt Shift 3", text: "Monitor to Pictures" },
+                { keys: "Alt Shift 4", text: "Region to clipboard" },
+                { keys: "Alt Shift 5", text: "HyprQuickFrame" }
+            ]
+        },
         {
             title: "Session",
             rows: [
@@ -64,17 +90,6 @@ PanelWindow {
             ]
         },
         {
-            title: "Capture",
-            rows: [
-                { keys: "Alt Shift 3", text: "Monitor to Pictures" },
-                { keys: "Alt Shift 4", text: "Region to clipboard" },
-                { keys: "Alt Shift 5", text: "HyprQuickFrame" }
-            ]
-        }
-    ]
-
-    readonly property var columnC: [
-        {
             title: "Workspaces",
             rows: [
                 { keys: "Super 1 - 0", text: "Switch workspace" },
@@ -83,16 +98,59 @@ PanelWindow {
                 { keys: "Super Shift S", text: "Move window to magic" },
                 { keys: "Three fingers", text: "Swipe between workspaces" }
             ]
+        }
+    ]
+
+    readonly property var columnC: [
+        {
+            title: "Neovim",
+            rows: [
+                { keys: "Space W", text: "Save" },
+                { keys: "Space E", text: "File browser" },
+                { keys: "Space F", text: "Find files" },
+                { keys: "Space S", text: "Search text" },
+                { keys: "Space B", text: "Buffers" },
+                { keys: "Space G", text: "Open Neogit" },
+                { keys: "g d", text: "Go to definition" },
+                { keys: "Ctrl A", text: "Select all" },
+                { keys: "Visual p", text: "Paste, keep register" }
+            ]
         },
+        {
+            title: "Terminal",
+            rows: [
+                { keys: "Ctrl R", text: "Fuzzy history search" },
+                { keys: "Ctrl F", text: "Fuzzy files, no hidden" },
+                { keys: "Ctrl T", text: "Fuzzy files, all" },
+                { keys: "Up / Down", text: "Match typed history" },
+                { keys: "Esc", text: "Vi command mode" }
+            ]
+        }
+    ]
+
+    readonly property var columnD: [
         {
             title: "Shell",
             rows: [
                 { keys: "Super Escape", text: "Power menu" },
                 { keys: "Super F1", text: "Wallpaper picker" },
-                { keys: "Super Shift F1", text: "Re-roll wallpaper and theme" },
+                { keys: "Super Shift F1", text: "New wallpaper and theme" },
                 { keys: "Alt Escape", text: "This cheat sheet" },
                 { keys: "Super Scroll", text: "Volume up / down" },
                 { keys: "Super Middle-click", text: "Mute" }
+            ]
+        },
+        {
+            title: "Herdr",
+            rows: [
+                { keys: "Ctrl B, H J K L", text: "Focus pane" },
+                { keys: "Ctrl B, \"", text: "Split horizontally" },
+                { keys: "Ctrl B, %", text: "Split vertically" },
+                { keys: "Ctrl B, C", text: "New tab" },
+                { keys: "Ctrl B, &", text: "Close tab" },
+                { keys: "Ctrl B, W", text: "Workspace picker" },
+                { keys: "Ctrl B, G", text: "Go to" },
+                { keys: "Ctrl B, Y", text: "Copy mode" }
             ]
         }
     ]
@@ -144,12 +202,12 @@ PanelWindow {
         spacing: 2
 
         Text {
-            Layout.bottomMargin: 4
+            Layout.bottomMargin: 5
             text: section.modelData.title.toUpperCase()
             color: Colors.accent
-            font.pixelSize: 11
+            font.pixelSize: 12
             font.bold: true
-            font.letterSpacing: 1.25
+            font.letterSpacing: 1.3
         }
 
         Repeater {
@@ -161,7 +219,7 @@ PanelWindow {
                 required property int index
 
                 Layout.fillWidth: true
-                implicitHeight: 27
+                implicitHeight: root.rowHeight
                 color: "transparent"
 
                 // Hairline between rows. Deliberately white rather than a
@@ -181,11 +239,12 @@ PanelWindow {
                     spacing: 12
 
                     Text {
-                        Layout.preferredWidth: 136
+                        Layout.preferredWidth: root.keyColumnWidth
+                        Layout.minimumWidth: 0
                         Layout.fillHeight: true
                         text: shortcutRow.modelData.keys
                         color: Colors.text
-                        font.pixelSize: 12
+                        font.pixelSize: root.bodySize
                         font.bold: true
                         elide: Text.ElideRight
                         verticalAlignment: Text.AlignVCenter
@@ -193,10 +252,11 @@ PanelWindow {
 
                     Text {
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         Layout.fillHeight: true
                         text: shortcutRow.modelData.text
                         color: Colors.subtext
-                        font.pixelSize: 12
+                        font.pixelSize: root.bodySize
                         elide: Text.ElideRight
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -209,8 +269,8 @@ PanelWindow {
         id: panel
         anchors.centerIn: parent
         width: root.panelWidth
-        implicitHeight: content.implicitHeight + 44
-        radius: 24
+        implicitHeight: content.implicitHeight + 56
+        radius: 26
         color: Colors.glass(0.72)
         border.width: 1
         border.color: Colors.glass(0.95)
@@ -223,8 +283,8 @@ PanelWindow {
         ColumnLayout {
             id: content
             anchors.fill: parent
-            anchors.margins: 22
-            spacing: 20
+            anchors.margins: 28
+            spacing: 24
 
             RowLayout {
                 Layout.fillWidth: true
@@ -232,7 +292,7 @@ PanelWindow {
                 Text {
                     text: "Keyboard shortcuts"
                     color: Colors.text
-                    font.pixelSize: 24
+                    font.pixelSize: 28
                     font.bold: true
                 }
 
@@ -241,24 +301,26 @@ PanelWindow {
                 Text {
                     text: "Esc to close"
                     color: Colors.subtext
-                    font.pixelSize: 13
+                    font.pixelSize: 15
                 }
             }
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 30
+                spacing: root.columnSpacing
 
                 Repeater {
-                    model: [root.columnA, root.columnB, root.columnC]
+                    model: [root.columnA, root.columnB, root.columnC, root.columnD]
 
                     ColumnLayout {
                         id: column
                         required property var modelData
 
+                        Layout.preferredWidth: root.columnWidth
+                        Layout.minimumWidth: 0
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignTop
-                        spacing: 18
+                        spacing: 20
 
                         Repeater {
                             model: column.modelData
