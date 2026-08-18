@@ -21,9 +21,9 @@
         configurationLimit = 10;
       };
       efi.canTouchEfiVariables = true;
-      # The menu is waited out in full on every boot. Hold space during POST to
-      # bring it back when an older generation needs picking.
-      timeout = 1;
+      # The initrd carries no HID drivers (see below), so its emergency shell has
+      # no keyboard and this menu is the only way back into an older generation.
+      timeout = 5;
     };
     # Root is NVMe + btrfs, so the initrd only needs the nvme driver. The
     # default set costs ~1s probing four empty SATA ports and ~3s in
@@ -37,6 +37,11 @@
     initrd = {
       includeDefaultModules = false;
       availableKernelModules = lib.mkForce [ "nvme" ];
+      # btrfs asks the crypto API for a "crc32c" shash to check the csum when
+      # it mounts. That provider is crc32c_cryptoapi, requested at runtime and
+      # so absent from btrfs.ko's modules.dep - dropping the default set drops
+      # it too, and root no longer mounts. Force-load it explicitly.
+      kernelModules = [ "crc32c_cryptoapi" ];
     };
     supportedFilesystems = [ "btrfs" ];
   };
