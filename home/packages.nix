@@ -34,6 +34,7 @@ in
     hyprshot
     hyprshutdown
     imagemagick
+    instawow
     kitty
     libnotify
     lutris
