@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 
 {
   imports = [
@@ -24,6 +24,19 @@
       # The menu is waited out in full on every boot. Hold space during POST to
       # bring it back when an older generation needs picking.
       timeout = 1;
+    };
+    # Root is NVMe + btrfs, so the initrd only needs the nvme driver. The
+    # default set costs ~1s probing four empty SATA ports and ~3s in
+    # switch-root, where systemd waits for udev to finish enumerating USB;
+    # both buses come up in userspace instead, off the critical path. The
+    # trade-off is no USB keyboard in an initrd emergency shell - recover by
+    # rebooting and picking an older generation from the boot menu.
+    #
+    # This deliberately overrides the list nixos-generate-config detected;
+    # hardware-configuration.nix stays as generated so it can be regenerated.
+    initrd = {
+      includeDefaultModules = false;
+      availableKernelModules = lib.mkForce [ "nvme" ];
     };
     supportedFilesystems = [ "btrfs" ];
   };
