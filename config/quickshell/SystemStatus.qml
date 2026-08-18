@@ -24,6 +24,7 @@ Singleton {
     property string pendingWifiSsid: ""
     property string wifiError: ""
     property string connectingWifiSsid: ""
+    property string pendingWifiPassword: ""
     property string weatherLocation: weatherSettings.location
     property string weatherTemp: ""
     property string weatherDescription: ""
@@ -110,8 +111,9 @@ Singleton {
         connectingWifiSsid = ssid;
         pendingWifiSsid = "";
         wifiError = "";
+        pendingWifiPassword = password;
         wifiConnectProc.command = password
-            ? ["nmcli", "device", "wifi", "connect", ssid, "password", password]
+            ? ["nmcli", "--ask", "device", "wifi", "connect", ssid]
             : ["nmcli", "device", "wifi", "connect", ssid];
         wifiConnectProc.running = true;
     }
@@ -141,7 +143,7 @@ Singleton {
         const profiles = [];
         let active = "";
         for (const line of text.trim().split("\n")) {
-            const p = line.split("\t");
+            const p = splitNmcli(line);
             if (p.length < 3 || (p[1] !== "vpn" && p[1] !== "wireguard")) continue;
             profiles.push(p[0]);
             if (p[2] === "yes") active = p[0];
@@ -167,7 +169,7 @@ Singleton {
     Process {
         id: vpnProc
         command: ["nmcli", "-t", "-f", "NAME,TYPE,ACTIVE", "connection", "show"]
-        stdout: StdioCollector { onStreamFinished: root.parseVpn(this.text.replace(/:/g, "\t")) }
+        stdout: StdioCollector { onStreamFinished: root.parseVpn(this.text) }
     }
     Process { id: vpnToggle; onExited: root.refreshVpn() }
     Process {
@@ -182,7 +184,15 @@ Singleton {
     }
     Process {
         id: wifiConnectProc
+        stdinEnabled: true
+        onStarted: {
+            if (root.pendingWifiPassword.length > 0) {
+                write(root.pendingWifiPassword + "\n");
+                root.pendingWifiPassword = "";
+            }
+        }
         onExited: code => {
+            root.pendingWifiPassword = "";
             if (code !== 0) {
                 root.pendingWifiSsid = root.connectingWifiSsid;
                 root.wifiError = "Password required or connection failed";

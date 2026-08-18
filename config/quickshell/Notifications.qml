@@ -89,7 +89,10 @@ Singleton {
     }
 
     function pruneHistory() {
-        const values = server.trackedNotifications.values;
+        // Copy first because dismiss() mutates trackedNotifications.
+        const values = [];
+        for (let i = 0; i < server.trackedNotifications.values.length; i++)
+            values.push(server.trackedNotifications.values[i]);
         const overflow = Math.max(0, values.length - maxHistory);
         for (let i = 0; i < overflow; i++) {
             const oldest = values[i];

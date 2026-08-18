@@ -7,7 +7,6 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   unstable = inputs.nixpkgs-unstable.legacyPackages.${system};
-  cursebreaker = pkgs.callPackage ../pkgs/cursebreaker.nix { };
   helium = inputs.helium.packages.${system}.helium;
   hyprquickframe = inputs.hyprquickframe.packages.${system}.default;
   zen-browser = inputs.zen-browser.packages.${system}.default;
@@ -20,7 +19,6 @@ in
     bat
     brightnessctl
     claude-code
-    cursebreaker
     discord
     eza
     fastfetch

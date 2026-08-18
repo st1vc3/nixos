@@ -59,8 +59,10 @@ next `rebuild` can reintroduce the broken configuration.
 
 ## Recover when the newest generation does not boot
 
-At the systemd-boot menu, select an older NixOS generation. Ten boot generations
-are retained by `boot.loader.systemd-boot.configurationLimit`.
+At the systemd-boot menu, select an older NixOS generation. The menu contains at
+most ten entries because of `boot.loader.systemd-boot.configurationLimit`.
+Garbage collection can remove generations older than 14 days, so this is a cap,
+not a guarantee that ten usable generations will always remain.
 
 After the older generation boots, inspect the generation list and use the
 specific-generation commands above to make the chosen generation permanent.

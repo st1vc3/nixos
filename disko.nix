@@ -3,7 +3,9 @@
     disk = {
       main = {
         type = "disk";
-        device = "/dev/nvme0n1"; # <-- CHANGE ME to your target disk
+        # Stable hardware identity for the system disk. Kernel nvmeX numbering
+        # can change when the second NVMe drive is detected first.
+        device = "/dev/disk/by-id/nvme-CT2000P3PSSD8_2411E89FF099";
         content = {
           type = "gpt";
           partitions = {

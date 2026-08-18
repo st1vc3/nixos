@@ -33,7 +33,7 @@ else
   [[ ! -e "$lock_image" ]] || chmod 600 "$lock_image"
 fi
 
-if hyprlock; then
+if hyprlock "$@"; then
   status=0
 else
   status=$?

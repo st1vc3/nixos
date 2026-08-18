@@ -1,4 +1,4 @@
-{ ... }:
+_:
 
 {
   # Git configuration shared with the macosx repo so both machines behave the
@@ -13,11 +13,11 @@
       user.email = "304027875+st1vc3@users.noreply.github.com";
       core.editor = "nvim";
       init.defaultBranch = "main";
-      push.autoSetupRemote = true;   # first `git push` just works, no -u dance
-      pull.rebase = true;            # rebase instead of merge commits on pull
-      fetch.prune = true;            # drop remote-tracking refs deleted upstream
-      rebase.autoStash = true;       # pull --rebase works with a dirty tree
-      diff.colorMoved = "default";   # moved lines colored differently from add/delete
+      push.autoSetupRemote = true; # first `git push` just works, no -u dance
+      pull.rebase = true; # rebase instead of merge commits on pull
+      fetch.prune = true; # drop remote-tracking refs deleted upstream
+      rebase.autoStash = true; # pull --rebase works with a dirty tree
+      diff.colorMoved = "default"; # moved lines colored differently from add/delete
       # Repos cloned over https still push over ssh - matches how this
       # machine authenticates to GitHub (no https credential helper set up).
       url."git@github.com:".insteadOf = "https://github.com/";

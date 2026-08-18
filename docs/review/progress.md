@@ -1,6 +1,6 @@
 # Configuration review handoff
 
-Last updated: 2026-08-03
+Last updated: 2026-08-18
 
 ## Working agreement
 
@@ -43,8 +43,8 @@ Last updated: 2026-08-03
     - Optional FZF, Zoxide, and Starship integrations are guarded.
     - Zsh and Bash interactive/non-interactive startup tests passed.
 
-The user explicitly asked to leave the `grep=rg` alias, NVM configuration, and
-CurseBreaker addon alias unchanged.
+The user explicitly asked to leave the `grep=rg` alias and NVM configuration
+unchanged. CurseBreaker was later removed when Instawow became its replacement.
 16. Cleaned up the Neovim configuration:
     - Removed the duplicate system-level Neovim package; Home Manager remains
       its sole owner.
@@ -88,17 +88,26 @@ CurseBreaker addon alias unchanged.
     specific-generation recovery, Git-state guidance, and scoped Snapper file
     recovery. Shell parsing/loading passed and the final system closure built at
     `/nix/store/2x5jx8268c8wsbbfiaca10by65y37dq0-nixos-system-nixos-26.05.20260730.21ea275`.
+26. Applied the follow-up repository review:
+    - Pinned Disko to the installed system drive's stable by-id path.
+    - Isolated lock-file commits from unrelated staged changes and completed
+      the CurseBreaker-to-Instawow migration.
+    - Kept Wi-Fi secrets out of process arguments, corrected escaped VPN-name
+      parsing, and made suspend wait for the Hyprlock surface.
+    - Made clipboard history volatile and bounded, hardened cliphist command
+      construction, and made notification pruning mutation-safe.
+    - Corrected rollback documentation and cleared all Nix formatting, Statix,
+      Deadnix, and ShellCheck findings.
 
 ## Current state
 
 - The complete configuration builds successfully as
-  `/nix/store/igmazhmrlsszh7y2sdw45zaqaispvk4v-nixos-system-nixos-26.05.20260730.21ea275`.
+  `/nix/store/083lljj6sc3qg79n19525il8v0d165ay-nixos-system-nixos-26.05.20260814.02e0898`.
 - Flake evaluation, Statix, Deadnix, ShellCheck, shell syntax checks, JSON
   validation, Git integrity checks, and the full NixOS closure build pass.
-- The review work is committed in focused, independently evaluable commits, and
-  the working tree is clean.
-- The latest shell changes have not yet been activated. Run `rebuild` before
-  judging the live shell behavior.
+- The follow-up review closure is activated. Quickshell, Hypridle, both volatile
+  clipboard watchers, NVIDIA module loading, and libvirt socket activation all
+  pass live service checks with no failed system or user units.
 
 ## Resume point
 

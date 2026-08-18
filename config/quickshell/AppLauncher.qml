@@ -42,6 +42,7 @@ PanelWindow {
     readonly property var webEngine: webEngines[mode] || null
     readonly property bool webMode: webEngine !== null
     readonly property string iconFont: LauncherCommands.iconFont
+    readonly property string cliphistDb: Quickshell.env("XDG_RUNTIME_DIR") + "/cliphist/db"
 
     function modeIcon(target) { return LauncherCommands.icon(target); }
     function modeName(target) { return LauncherCommands.label(target); }
@@ -210,7 +211,10 @@ PanelWindow {
         if (!item)
             return;
         close();
-        clipCopy.command = ["sh", "-c", "cliphist decode " + item.id + " | wl-copy"];
+        if (!/^\d+$/.test(item.id))
+            return;
+        clipCopy.command = ["sh", "-c", "cliphist -db-path \"$1\" decode \"$2\" | wl-copy",
+                            "cliphist-copy", cliphistDb, item.id];
         clipCopy.startDetached();
     }
 
@@ -248,8 +252,12 @@ PanelWindow {
         const path = Quickshell.env("HOME") + "/.cache/quickshell/clip-preview-" + item.id;
         clipPreview.targetId = item.id;
         clipPreview.target = path;
+        if (!/^\d+$/.test(item.id))
+            return;
         clipPreview.command = ["sh", "-c",
-            "mkdir -p ~/.cache/quickshell && cliphist decode " + item.id + " > '" + path + "'"];
+            "mkdir -p \"$1\" && cliphist -db-path \"$2\" decode \"$3\" > \"$4\"",
+            "cliphist-preview", Quickshell.env("HOME") + "/.cache/quickshell",
+            cliphistDb, item.id, path];
         clipPreview.running = true;
     }
 
@@ -349,7 +357,7 @@ PanelWindow {
     // cliphist list emits one "<id>\t<preview>" row per entry, newest first.
     Process {
         id: clipLister
-        command: ["cliphist", "list"]
+        command: ["cliphist", "-db-path", root.cliphistDb, "list"]
         stdout: StdioCollector {
             onStreamFinished: {
                 root.clipboardItems = this.text.split("\n")

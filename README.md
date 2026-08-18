@@ -52,7 +52,6 @@ My NixOS installation, configured declaratively with [flakes](https://nixos.wiki
 | `config/agents/shared.md` | Shared global instructions deployed to Claude Code and Codex |
 | `scripts/set-wallpaper.sh` | Wallpaper setter (awww) + matugen retheme → `~/Scripts/` |
 | `scripts/misc/` | Output and region screenshot helpers → `~/.local/bin/misc/` |
-| `pkgs/cursebreaker.nix` | Custom package: WoW addon manager, not in nixpkgs |
 | `docs/installation.md` | Step-by-step install from the NixOS live ISO |
 | `docs/snapshots.md` | Snapshot scope, existing-system migration, and routine commands |
 | `docs/rollback.md` | Safe rebuild workflow and system/file recovery procedures |
@@ -65,6 +64,9 @@ app launcher, power menu, wallpaper picker, notification popups, and notificatio
 centre. Supporting services include **hyprlock**/**hypridle**,
 **hyprpolkitagent**, and **awww**. Home Manager ties the Quickshell, Awww,
 wallpaper initialization, idle, and PolicyKit services to the graphical session.
+Clipboard history is limited to 200 entries in the private per-login runtime
+directory and is erased at logout, so copied secrets are not retained on disk
+across sessions.
 
 Screenshot bindings are `ALT+SHIFT+3` for the focused output,
 `ALT+SHIFT+4` for an interactive region, and `ALT+SHIFT+5` for
@@ -139,10 +141,11 @@ choice in [`config/zsh/aliases.zsh`](config/zsh/aliases.zsh).
 ## Formatting and linting
 
 `nix fmt` (wired to `nixfmt`, the RFC 166 formatter) enforces consistent
-style. Run it before committing:
+style. Check tracked Nix files before committing so unrelated paths such as a
+local `result` symlink are not traversed:
 
 ```bash
-nix fmt
+nix fmt -- --check $(git ls-files '*.nix')
 ```
 
 `nix flake check` validates that the flake still evaluates. For deeper

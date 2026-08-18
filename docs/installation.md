@@ -4,8 +4,9 @@ Target: physical machine, AMD CPU + NVIDIA GPU, UEFI, btrfs (unencrypted), Hyprl
 
 ## 0. Before you boot
 
-Edit `disko.nix` and set the real `device` (you can also do this live on the
-ISO). Everything else in the repo is ready to go.
+Confirm that `disko.nix` names the intended disk by its stable
+`/dev/disk/by-id/...` path. Change it when installing on different hardware
+(you can also do this live on the ISO). Everything else is ready to go.
 
 ## 1. Boot the NixOS minimal ISO
 
@@ -29,10 +30,13 @@ ping -c1 nixos.org      # confirm connectivity
 ## 3. Identify the target disk
 
 ```bash
-lsblk -o NAME,SIZE,TYPE,MODEL
+lsblk -o NAME,PATH,SIZE,TYPE,MODEL,SERIAL
+ls -l /dev/disk/by-id/
 ```
 
-Note the disk (e.g. `/dev/nvme0n1`). This disk will be **completely erased**.
+Note the disk's `/dev/disk/by-id/...` symlink. Do not use a kernel-assigned name
+such as `/dev/nvme0n1`, which can identify a different drive after reboot. This
+disk will be **completely erased**.
 
 ## 4. Get the config
 
@@ -42,7 +46,7 @@ git clone https://github.com/st1vc3/nixos /mnt-config
 cd /mnt-config
 ```
 
-Edit `disko.nix` so `device = "..."` matches step 3:
+Edit `disko.nix` so `device = "..."` matches the by-id path from step 3:
 
 ```bash
 nano disko.nix
@@ -133,8 +137,8 @@ sudo chown -R "$USER":users ~/nixos
 sudo nixos-rebuild switch --flake ~/nixos#nixos
 ```
 
-Commit the real `hardware-configuration.nix` back to the repo so future
-rebuilds are reproducible.
+Commit the real `hardware-configuration.nix` and the selected stable Disko
+device back to the repo so future rebuilds and reinstalls are reproducible.
 
 ---
 

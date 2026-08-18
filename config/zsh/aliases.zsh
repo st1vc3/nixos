@@ -66,7 +66,7 @@ upgrade() {
   ( cd "$flake" && nix flake update ) || return
   git -C "$flake" add flake.lock
   git -C "$flake" diff --cached --quiet flake.lock ||
-    git -C "$flake" commit -m "flake.lock: update inputs $(date +%F)" || return
+    git -C "$flake" commit -m "flake.lock: update inputs $(date +%F)" -- flake.lock || return
   sudo nixos-rebuild boot --flake "$flake#nixos" || return
   sudo nix-collect-garbage --delete-older-than 14d
   echo "Upgrade staged as boot default. Reboot to run the new kernel."
