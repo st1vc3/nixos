@@ -21,7 +21,9 @@
         configurationLimit = 10;
       };
       efi.canTouchEfiVariables = true;
-      timeout = 3;
+      # The menu is waited out in full on every boot. Hold space during POST to
+      # bring it back when an older generation needs picking.
+      timeout = 1;
     };
     supportedFilesystems = [ "btrfs" ];
   };
