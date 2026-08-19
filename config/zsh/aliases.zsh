@@ -98,4 +98,3 @@ alias cx="codex --dangerously-bypass-approvals-and-sandbox"
 alias ff="clear && fastfetch"
 alias c="clear"
 alias stream='mpv av://v4l2:/dev/video4 --fullscreen --demuxer-lavf-o=input_format=mjpeg,framerate=60 --profile=low-latency --untimed'
-alias addon="instawow"

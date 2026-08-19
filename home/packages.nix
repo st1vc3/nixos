@@ -7,6 +7,9 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   unstable = inputs.nixpkgs-unstable.legacyPackages.${system};
+  # Not in nixpkgs; repackaged from the official AppImage. See the header of
+  # pkgs/curseforge.nix for why it needs a manual bump when upstream ships.
+  curseforge = pkgs.callPackage ../pkgs/curseforge.nix { };
   helium = inputs.helium.packages.${system}.helium;
   hyprquickframe = inputs.hyprquickframe.packages.${system}.default;
   zen-browser = inputs.zen-browser.packages.${system}.default;
@@ -19,6 +22,7 @@ in
     bat
     brightnessctl
     claude-code
+    curseforge
     discord
     eza
     fastfetch
@@ -32,7 +36,6 @@ in
     hyprshot
     hyprshutdown
     imagemagick
-    instawow
     kitty
     libnotify
     lutris
