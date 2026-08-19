@@ -107,8 +107,8 @@ nixos-enter --root /mnt -c 'passwd stivce'
 ```
 
 The live environment's `/mnt-config` checkout disappears after reboot. Preserve
-the exact edited checkout—including the generated hardware configuration and
-the selected Disko device—in the installed system before continuing:
+the exact edited checkout - including the generated hardware configuration and
+the selected Disko device - in the installed system before continuing:
 
 ```bash
 mkdir -p /mnt/var/lib/nixos
@@ -139,6 +139,54 @@ sudo nixos-rebuild switch --flake ~/nixos#nixos
 
 Commit the real `hardware-configuration.nix` and the selected stable Disko
 device back to the repo so future rebuilds and reinstalls are reproducible.
+
+---
+
+## Rebuilding after install
+
+```bash
+sudo nixos-rebuild switch --flake ~/nixos#nixos
+```
+
+The interactive shell also provides `rebuild_test` for a temporary activation,
+`rebuild` for a permanent switch, `generations` to list recovery points, and
+`rollback_system` for the immediately previous NixOS generation. See
+[`rollback.md`](rollback.md) before relying on Snapper for file recovery.
+
+A rebuild deploys the Quickshell configuration but does not reload the running
+shell, which keeps the old QML until the user service is restarted:
+
+```bash
+systemctl --user restart quickshell
+```
+
+Update pinned inputs (nixpkgs, home-manager, wallpapers), then rebuild:
+
+```bash
+nix flake update            # or: nix flake update wallpapers
+sudo nixos-rebuild switch --flake ~/nixos#nixos
+```
+
+### `upgrade`
+
+The interactive shell provides `upgrade` as a one-shot full update. It:
+
+1. Refreshes all pinned inputs (`nix flake update`).
+2. Auto-commits the refreshed `flake.lock`, so every upgrade is recorded in
+   Git history with the date.
+3. Builds the new generation with `nixos-rebuild boot` - it becomes the **boot
+   default** but is *not* activated on the running system, so a bad kernel or
+   driver only takes effect once you deliberately reboot.
+4. Runs `nix-collect-garbage --delete-older-than 14d`, pruning old store paths
+   while keeping the last two weeks of generations as rollback targets.
+
+```bash
+upgrade   # then reboot to run the new kernel
+```
+
+Because it uses `boot` rather than `switch`, **reboot afterwards** to pick up
+kernel and driver changes. Adjust the `14d` retention or the `boot`/`switch`
+choice in [`../config/zsh/aliases.zsh`](../config/zsh/aliases.zsh).
 
 ---
 
