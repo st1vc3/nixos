@@ -1,0 +1,96 @@
+// Voice dictation daemon. Deployed read-only from the flake by
+// home/stivce.nix; the service and its secret live in modules/dictation.nix,
+// the keys in config/hypr/hyprland.lua.
+//
+// Only the fields that differ from upstream defaults are set here. Note that
+// `transcription.groq` is deserialized without per-field defaults, so all three
+// of its keys have to be present together or the daemon refuses the file.
+{
+  // Hyprland owns the keys (config/hypr/hyprland.lua) and drives this daemon
+  // over its control socket, so the daemon's own evdev listener is switched
+  // off - it would need the account in the `input` group, which is read access
+  // to every keystroke on the machine. Blanking both of these is what actually
+  // disables it: an omitted "press" is refilled from "primary_shortcut", and an
+  // omitted "primary_shortcut" falls back to the built-in SUPER+ALT+R.
+  "primary_shortcut": "",
+  "shortcuts": {
+    "press": "",
+    "hold": ""
+  },
+
+  "transcription": {
+    // Hosted Whisper. Chosen over the local whisper_cpp backend for latency:
+    // dictating a prompt to an agent is interactive, and turnaround matters
+    // more than keeping the audio on this machine. Switch "provider" to
+    // "parakeet" or "whisper_cpp" to move transcription back on-device.
+    "provider": "groq",
+    "groq": {
+      "model": "whisper-large-v3-turbo",
+      "endpoint": "https://api.groq.com/openai/v1/audio/transcriptions",
+      // Whisper conditions on this text, so naming the vocabulary this machine
+      // actually dictates keeps it from inventing near-homophones. Unlike the
+      // upstream default it asks for punctuation: the output is prose fed to
+      // an agent, not a code comment.
+      "prompt": "Technical dictation about software and Linux. Use proper capitalization, punctuation, and sentence breaks. Expect terms like NixOS, nixpkgs, flake, Hyprland, Quickshell, Wayland, systemd, btrfs, home-manager, Neovim, kitty, git, Claude Code."
+    }
+  },
+
+  // Voice activity detection, and the reason a stray tap of the hold key does
+  // not type anything.
+  //
+  // Whisper is trained on continuous speech and will not return an empty
+  // string: hand it a fifth of a second of room tone and it emits whatever is
+  // most probable for near-silence, which for whisper-large-v3 is "Thank you."
+  // The daemon cannot filter that after the fact, since it is indistinguishable
+  // from someone actually saying it - its only non-speech filter matches
+  // explicit [BLANK_AUDIO]-style markers. So the audio has to be rejected
+  // before it is ever uploaded.
+  //
+  // With this on, preprocessing trims anything that is not speech and skips
+  // transcription outright when nothing survives ("Recording contained only
+  // silence after fast VAD trimming"). min_speech_ms is raised above the
+  // 120ms default so a key click or a breath does not clear the bar either.
+  "fast_vad": {
+    "enabled": true,
+    // "aggressive" is not enough on this machine: the Scarlett Solo picks up
+    // enough room tone that 300ms+ of it still classifies as speech, and silent
+    // taps of 0.38s and 0.60s both made it through to Groq and came back
+    // "Thank you." Only the strictest profile rejects them.
+    "profile": "very_aggressive",
+    // The load-bearing number. A stray tap captures around 200ms, so requiring
+    // more contiguous speech than that rejects the whole clip before it can be
+    // uploaded, whatever the room noise. Kept just under half a second so real
+    // single words ("yes", "undo") still register.
+    "min_speech_ms": 300,
+    // Roll-in/roll-out is padding around detected speech so a sentence does not
+    // lose its first consonant. It has to stay well under min_speech_ms: at the
+    // old 160/200 the padding alone spanned a short tap, so any one noisy frame
+    // kept the entire clip and nothing was ever trimmed.
+    "pre_roll_ms": 100,
+    "post_roll_ms": 120
+  },
+
+  // Spoken forms that Whisper transcribes literally but are almost always meant
+  // as the symbol. Grow this list as mis-transcriptions show up in practice.
+  "word_overrides": {
+    "new line": "\n",
+    "newline": "\n",
+    "under score": "_",
+    "hyprland": "Hyprland",
+    "Hyperland": "Hyprland",
+    "hyper land": "Hyprland",
+    "nix os": "NixOS",
+    "Nix OS": "NixOS",
+    "quick shell": "Quickshell"
+  },
+
+  // Recording has no on-screen indicator, so the start/stop chimes are the only
+  // feedback that the hold key registered. Kept quiet enough to talk over.
+  "audio_feedback": true,
+  "start_sound_volume": 0.15,
+  "stop_sound_volume": 0.15,
+
+  // Injection into the focused window is the primary path; the clipboard copy
+  // is the fallback when a window rejects the synthetic paste.
+  "auto_copy_clipboard": true
+}

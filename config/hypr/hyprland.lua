@@ -296,6 +296,20 @@ hl.bind(mainMod .. " + ESCAPE", hl.dsp.exec_cmd("quickshell ipc call powermenu t
 -- contents are written in config/quickshell/Cheatsheet.qml; the bindings below
 -- stay the source of truth, so update both together.
 hl.bind("ALT + ESCAPE", hl.dsp.exec_cmd("quickshell ipc call cheatsheet toggle"))
+-- Voice dictation (hyprwhspr-rs, wired in modules/dictation.nix). Hold to talk
+-- and release to transcribe into the focused window; the tap toggle covers
+-- longer dictation, where holding a key for a minute is impractical. Both are
+-- thin clients over the daemon's control socket, which is why the compositor
+-- owns the shortcut instead of the daemon's own evdev listener.
+--
+-- These are bare function keys, so the compositor consumes them before any
+-- window sees them: F1 no longer reaches an application as "help", and F2 no
+-- longer reaches editors as "rename symbol". That is the deliberate trade for
+-- a modifier-free push-to-talk key.
+hl.bind("F1", hl.dsp.exec_cmd("hyprwhspr-rs record start"))
+hl.bind("F1", hl.dsp.exec_cmd("hyprwhspr-rs record stop"), { release = true })
+hl.bind("F2", hl.dsp.exec_cmd("hyprwhspr-rs record toggle"))
+
 hl.bind("ALT + SHIFT + 3", hl.dsp.exec_cmd("$HOME/.local/bin/misc/screenshot-output-save"))
 hl.bind("ALT + SHIFT + 4", hl.dsp.exec_cmd("$HOME/.local/bin/misc/screenshot-region"))
 hl.bind("ALT + SHIFT + 5", hl.dsp.exec_cmd("hyprquickframe"))

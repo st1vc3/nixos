@@ -105,6 +105,11 @@
     };
     "hyprquickframe/theme.toml".source = ../config/hyprquickframe/theme.toml;
 
+    # Voice dictation. The daemon watches this file and reloads on change, and
+    # never writes it back, so a read-only store symlink is safe. Its sibling
+    # `env` file (the Groq key, see modules/dictation.nix) stays unmanaged.
+    "hyprwhspr-rs/config.jsonc".source = ../config/hyprwhspr-rs/config.jsonc;
+
     # Base config owns the Hyprlock and Kitty mappings. When the shell is
     # enabled, append its template so Matugen also writes colors.json.
     # Keeping it conditional means a disabled shell leaves Matugen

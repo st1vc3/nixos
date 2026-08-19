@@ -67,6 +67,13 @@ PanelWindow {
             ]
         },
         {
+            title: "Dictation",
+            rows: [
+                { keys: "F1", text: "Hold to talk" },
+                { keys: "F2", text: "Toggle dictation" }
+            ]
+        },
+        {
             title: "Session",
             rows: [
                 { keys: "Super Shift Q", text: "Lock screen" },
