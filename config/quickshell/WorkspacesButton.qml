@@ -127,7 +127,6 @@ PanelWindow {
         Hyprland.dispatch("hl.dsp.focus({workspace = " + id + "})");
     }
 
-    // Pills row.
     Row {
         id: pillRow
         anchors.top: parent.top

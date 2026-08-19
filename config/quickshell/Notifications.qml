@@ -14,7 +14,6 @@ import Quickshell.Services.Notifications
 Singleton {
     id: root
 
-    // Full history model for the centre.
     readonly property alias list: server.trackedNotifications
 
     // Do not disturb: incoming notifications still land in the history, but no
