@@ -6,3 +6,8 @@ result-*
 .DS_Store
 *.swp
 *.log
+
+# Machine-local agent state. Only ~/.config/git/ignore kept this out of the
+# repo before, and that file is neither managed by home/git.nix nor cloned
+# with the repo, so a fresh checkout had no protection at all.
+.claude/settings.local.json
