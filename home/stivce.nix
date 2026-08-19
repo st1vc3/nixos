@@ -8,6 +8,7 @@
 
 {
   imports = [
+    ./gaming.nix
     ./git.nix
     ./neovim.nix
     ./packages.nix
