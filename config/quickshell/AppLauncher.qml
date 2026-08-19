@@ -132,7 +132,18 @@ PanelWindow {
 
     // --- Nix package search -------------------------------------------------
     property var nixItems: []
-    property bool nixSearching: false
+    property string nixError: ""
+    // Query the in-flight `nix search` was started for, plus the newest query
+    // it still has to catch up to. A running search is never cancelled: with a
+    // cold eval cache one takes ~15s, so killing it on the next keystroke threw
+    // away the whole evaluation *and* left the cache unpopulated - the search
+    // could then never finish, no matter how long the user kept typing.
+    property string nixRunningQuery: ""
+    property string nixQueuedQuery: ""
+    readonly property bool nixSearching: nixRunningQuery.length > 0
+    // "<pname>-<version>" of everything in the system and per-user profiles,
+    // used to badge results that are already installed.
+    property var installedNames: ({})
 
     anchors.top: true
     anchors.left: true
@@ -192,8 +203,10 @@ PanelWindow {
             sshHostLister.running = true;
         } else if (target === "nsearch") {
             nixItems = [];
-            nixSearching = false;
+            nixError = "";
+            nixQueuedQuery = "";
             nixResults.currentIndex = -1;
+            installedLister.running = true;
         }
         // Web modes need no loader: the query is typed after the switch.
     }
@@ -324,17 +337,76 @@ PanelWindow {
             close();
     }
 
+    // A search already in flight is left alone and the newest query queued
+    // behind it; whatever finishes last wins. Restarting instead would both
+    // starve cold-cache searches and let a cancelled run's empty output land
+    // after a good one and wipe the results.
     function runNixSearch() {
-        const terms = root.query.split(/\s+/).filter(Boolean);
-        if (terms.length === 0 || root.query.length < 2) {
+        const q = root.query;
+        if (q.length < 2) {
             nixItems = [];
-            nixSearching = false;
+            nixError = "";
+            nixQueuedQuery = "";
             return;
         }
-        nixSearching = true;
-        nixSearch.command = ["nix", "search", "nixpkgs"].concat(terms).concat(["--json"]);
-        nixSearch.running = false;
+        if (q === nixRunningQuery)
+            return;
+        if (nixRunningQuery.length > 0) {
+            nixQueuedQuery = q;
+            return;
+        }
+        startNixSearch(q);
+    }
+
+    function startNixSearch(q) {
+        const terms = q.split(/\s+/).filter(Boolean);
+        nixQueuedQuery = "";
+        nixRunningQuery = q;
+        // --quiet drops nix's per-attribute progress chatter, which ran to
+        // 8MB of stderr per search and buried the one line that matters.
+        nixSearch.command = ["nix", "search", "nixpkgs"]
+            .concat(terms).concat(["--json", "--quiet"]);
         nixSearch.running = true;
+    }
+
+    // nix search matches every term against the attribute *and* the
+    // description, so "firefox" also pulls in fira-sans and addwater. Ranking
+    // on how well the attribute itself matches keeps the package that was
+    // actually asked for at the top; alphabetical order alone buried it.
+    function nixRank(attr, terms, q) {
+        const name = attr.toLowerCase();
+        const leaf = name.slice(name.lastIndexOf(".") + 1);
+        if (leaf === q || name === q)
+            return 0;
+        // A separator after the query means a variant of the thing asked for
+        // (firefox-bin, firefox_decrypt); without one it is a different
+        // package that merely starts the same way (firefoxpwa).
+        if (leaf.startsWith(q))
+            return "-_.".includes(leaf.charAt(q.length)) ? 1 : 2;
+        if (terms.every(term => name.includes(term)))
+            return 3;
+        return 4;
+    }
+
+    // A profile entry is a derivation name, so the version has to match too:
+    // having firefox-153.0.4 says nothing about firefox-beta. Keyed on the
+    // attribute rather than the pname because variants share one pname -
+    // firefox-mobile reports pname "firefox" and would badge itself installed
+    // off the plain firefox in the profile. Attributes whose derivation is
+    // named differently just go unbadged, which beats claiming otherwise.
+    function isInstalled(item) {
+        if (!item)
+            return false;
+        const leaf = item.attr.slice(item.attr.lastIndexOf(".") + 1);
+        const key = item.version.length > 0 ? leaf + "-" + item.version : leaf;
+        return installedNames[key] === true;
+    }
+
+    // The last line nix wrote, used as the failure message. Without it a
+    // broken registry or an unparsable query looked like "no results".
+    function nixLastError(text) {
+        const lines = text.split("\n").filter(line => line.trim().length > 0);
+        return lines.length > 0 ? lines[lines.length - 1].trim() : "";
     }
 
     onVisibleChanged: {
@@ -403,14 +475,59 @@ PanelWindow {
         }
     }
 
+    // Everything referenced by the system and per-user profiles, as bare
+    // "<pname>-<version>" names. The profiles are buildEnvs, so their direct
+    // references are the installed packages themselves; home-manager nests one
+    // level deeper behind a *-path aggregate. Broken roots (a stale
+    // ~/.nix-profile symlink) are skipped rather than aborting the whole query.
+    Process {
+        id: installedLister
+        command: ["sh", "-c",
+            "roots=$(for r in /run/current-system/sw \"/etc/profiles/per-user/$USER\" \"$HOME/.nix-profile\"; do"
+            + " [ -e \"$r\" ] && nix-store -q --references \"$r\" 2>/dev/null; done);"
+            + " nested=$(printf '%s\\n' \"$roots\" | grep -E -- '-(path|env)$'"
+            + " | xargs -r -n1 nix-store -q --references 2>/dev/null);"
+            + " printf '%s\\n%s\\n' \"$roots\" \"$nested\""
+            + " | sed 's|^/nix/store/[a-z0-9]*-||'"
+            + " | sed -E 's/-(man|bin|dev|doc|lib|out|info|terminfo|debug)$//'"
+            + " | sort -u"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const set = ({});
+                const lines = this.text.split("\n");
+                for (let i = 0; i < lines.length; i++) {
+                    const name = lines[i].trim();
+                    if (name.length > 0)
+                        set[name] = true;
+                }
+                root.installedNames = set;
+            }
+        }
+    }
+
     // `nix search ... --json` prints an object keyed by attribute path.
     Process {
         id: nixSearch
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.nixSearching = false;
-                let obj = {};
-                try { obj = JSON.parse(this.text); } catch (e) { obj = {}; }
+        stderr: StdioCollector { id: nixStderr }
+        stdout: StdioCollector { id: nixStdout }
+        // Both collectors have drained by the time exited fires, so this is
+        // the only point where the results and nix's own error text are both
+        // complete - stdout closes first and would report a bare failure.
+        onExited: function(exitCode, exitStatus) {
+            const finished = root.nixRunningQuery;
+            root.nixRunningQuery = "";
+
+            let obj = null;
+            if (exitCode === 0) {
+                try { obj = JSON.parse(nixStdout.text); } catch (e) { obj = null; }
+            }
+            if (obj === null) {
+                root.nixItems = [];
+                root.nixError = root.nixLastError(nixStderr.text)
+                    || ("nix search failed (exit " + exitCode + ")");
+            } else {
+                const terms = finished.toLowerCase().split(/\s+/).filter(Boolean);
+                const q = finished.toLowerCase();
                 const arr = [];
                 for (const key in obj) {
                     const attr = key.replace(/^legacyPackages\.[^.]+\./, "");
@@ -418,13 +535,25 @@ PanelWindow {
                         attr: attr,
                         pname: obj[key].pname || attr,
                         version: obj[key].version || "",
-                        description: obj[key].description || ""
+                        description: obj[key].description || "",
+                        rank: root.nixRank(attr, terms, q)
                     });
                 }
-                arr.sort((a, b) => a.attr.localeCompare(b.attr));
+                // Shorter attributes first within a rank so plain "firefox"
+                // precedes firefox-bin and firefox-esr-140-unwrapped.
+                arr.sort((a, b) => a.rank - b.rank
+                    || a.attr.length - b.attr.length
+                    || a.attr.localeCompare(b.attr));
                 root.nixItems = arr;
-                nixResults.currentIndex = -1;
+                root.nixError = "";
             }
+            nixResults.currentIndex = -1;
+
+            // Catch up to anything typed while this search was running.
+            if (root.nixQueuedQuery.length > 0 && root.nixQueuedQuery !== finished)
+                root.startNixSearch(root.nixQueuedQuery);
+            else
+                root.nixQueuedQuery = "";
         }
     }
 
@@ -938,6 +1067,15 @@ PanelWindow {
                                     color: Colors.subtext
                                     font.pixelSize: 12
                                 }
+
+                                // Already in the system or per-user profile.
+                                Rectangle {
+                                    visible: root.isInstalled(nixRow.modelData)
+                                    implicitWidth: 8
+                                    implicitHeight: 8
+                                    radius: 4
+                                    color: Colors.success
+                                }
                             }
 
                             Text {
@@ -969,10 +1107,16 @@ PanelWindow {
                     anchors.centerIn: parent
                     visible: root.nixItems.length === 0
                     text: root.nixSearching ? "Searching nixpkgs…"
+                        : root.nixError.length > 0 ? root.nixError
                         : root.query.length < 2 ? "Type at least two characters"
                         : "No matching packages"
-                    color: Colors.subtext
+                    color: root.nixError.length > 0 && !root.nixSearching
+                        ? Colors.accent
+                        : Colors.subtext
                     font.pixelSize: 14
+                    width: parent.width - 60
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
                 }
             }
 

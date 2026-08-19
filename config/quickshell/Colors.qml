@@ -28,6 +28,10 @@ Singleton {
     property color outline: "#8d9199"
     property color alert: "#ffb4ab"
 
+    // Deliberately outside the matugen palette: "installed" has to read as
+    // green whatever the wallpaper happens to tint the accent to.
+    readonly property color success: "#6dd58c"
+
     // Frosted-glass fill: the surface colour at a given alpha, to be paired
     // with a Hyprland blur layer-rule (see hyprland.lua). Matches the acrylic
     // look used throughout the shell's notifications and popups.
