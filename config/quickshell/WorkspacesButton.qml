@@ -95,16 +95,26 @@ PanelWindow {
     }
 
     // Windows on the currently hovered workspace only, sorted by class.
+    //
+    // Read from the same live bindings the pills use. lastIpcObject is only
+    // filled in by an explicit refreshToplevels(), which nothing here calls, so
+    // keying off it dropped every window and collapsed the panel to an empty
+    // sliver; it is kept only as a last-resort fallback.
     readonly property var hoveredWindows: {
         if (hoveredWs < 0)
             return [];
         const arr = [];
         const tops = Hyprland.toplevels.values;
         for (let i = 0; i < tops.length; i++) {
-            const o = tops[i].lastIpcObject;
-            if (!o || !o.workspace || o.workspace.id !== bar.hoveredWs)
+            const top = tops[i];
+            if (!top.workspace || top.workspace.id !== bar.hoveredWs)
                 continue;
-            arr.push({ appClass: o.class || "?", title: o.title || "" });
+            const ipc = top.lastIpcObject;
+            const wl = top.wayland;
+            arr.push({
+                appClass: (wl && wl.appId) || (ipc && ipc.class) || "?",
+                title: top.title || (wl && wl.title) || (ipc && ipc.title) || ""
+            });
         }
         arr.sort((a, b) => a.appClass.localeCompare(b.appClass));
         return arr;
@@ -176,7 +186,10 @@ PanelWindow {
     Rectangle {
         id: dropdown
 
-        readonly property real openHeight: Math.min(12 + bar.hoveredWindows.length * 42, bar.maxDropHeight)
+        // At least one row's worth of height: with no windows the panel was a
+        // 12px sliver that clipped its own "No open windows" label.
+        readonly property real openHeight: Math.min(
+            12 + Math.max(bar.hoveredWindows.length, 1) * 42, bar.maxDropHeight)
 
         y: pillRow.y + pillRow.height
         // Hangs under the hovered pill, held inside the surface so a pill near
