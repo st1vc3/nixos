@@ -12,6 +12,13 @@ function zvm_after_init() {
   bindkey -M vicmd 'k' history-substring-search-up
   bindkey -M vicmd 'j' history-substring-search-down
 
+  # Delete the previous word. vi insert mode leaves both of these on
+  # single-character deletes (Ctrl-Backspace arrives as ^H) or unbound
+  # (Alt-Backspace as ^[^?, which otherwise falls through to the ^[ prefix
+  # and merely switches to normal mode).
+  bindkey '^[^?' backward-kill-word
+  bindkey '^H' backward-kill-word
+
   # Ctrl-F: fzf file picker excluding hidden files (defined in fzf.zsh)
   bindkey '^F' _fzf_file_no_hidden
 

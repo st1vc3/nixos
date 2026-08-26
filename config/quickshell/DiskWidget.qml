@@ -50,7 +50,7 @@ ColumnLayout {
                 text: SystemStats.human(SystemStats.rootDisk.used) + " / "
                       + SystemStats.human(SystemStats.rootDisk.size) + " used"
                 color: Colors.subtext
-                font.pixelSize: 18
+                font.pixelSize: 14
             }
         }
     }
@@ -74,21 +74,21 @@ ColumnLayout {
                     Text {
                         text: mount.modelData.target
                         color: Colors.text
-                        font.pixelSize: 18
+                        font.pixelSize: 14
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
                     Text {
                         text: (mount.modelData.pct || 0) + "%"
                         color: (mount.modelData.pct || 0) >= 90 ? Colors.alert : Colors.subtext
-                        font.pixelSize: 18
+                        font.pixelSize: 14
                     }
                 }
 
                 // Track + fill bar.
                 Rectangle {
                     Layout.fillWidth: true
-                    height: 4
+                    implicitHeight: 4
                     radius: 2
                     color: Colors.glass(0.35)
 

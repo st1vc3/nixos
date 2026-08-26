@@ -125,7 +125,7 @@ PanelWindow {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
+                implicitHeight: 1
                 color: Colors.glass(0.5)
             }
 

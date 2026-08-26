@@ -138,9 +138,9 @@ Quickshell is the notification daemon. Popups stack in the top-right corner:
 ![A notification popup in the top-right corner](docs/images/notification-popup.webp)
 
 Clicking the status pill opens the centre, which keeps the history along with a
-do-not-disturb toggle and a per-subvolume storage breakdown:
+do-not-disturb toggle and a per-filesystem storage breakdown:
 
-![The notification centre with a do-not-disturb toggle and disk usage per btrfs subvolume](docs/images/notification-center.webp)
+![The notification centre with a do-not-disturb toggle and filesystem usage](docs/images/notification-center.webp)
 
 ### Control centre
 
@@ -151,7 +151,10 @@ microphone toggles, the active networks, and Bluetooth device discovery.
 
 The location line, Wi-Fi SSID and LAN address are pixelated in that screenshot
 on purpose - this repository is public, and those three fields identify where
-the machine physically is.
+the machine physically is. Weather lookup sends the configured location to
+Open-Meteo's geocoding API, then sends its coordinates to the forecast API every
+15 minutes. Open-Meteo states that its public API does not collect personal data
+or use third-party tracking.
 
 ### Power menu
 
@@ -229,14 +232,16 @@ across sessions.
 | `modules/dictation.nix` | hyprwhspr-rs voice dictation daemon and its Groq credential |
 | `modules/apps.nix` | Small set of system-wide CLI/recovery tools |
 | `modules/gaming.nix` | Steam, GameMode, and libvirt system services |
+| `modules/printing.nix` | CUPS, printer discovery, and the printer configuration UI |
 | `modules/snapshots.nix` | Snapper schedule and bounded root-snapshot retention |
 | `home/default.nix` | home-manager wiring |
 | `home/stivce.nix` | User identity and shared configuration-file deployment |
-| `home/packages.nix`, `home/services.nix`, `home/theming.nix`, `home/neovim.nix` | Focused user packages, services, toolkit theme, and editor modules |
+| `home/packages.nix`, `home/services.nix`, `home/theming.nix`, `home/neovim.nix`, `home/git.nix`, `home/gaming.nix` | Focused user packages, services, toolkit theme, editor, Git, and game launcher modules |
 | `home/quickshell.nix` | Quickshell option, config deployment, palette seed, and user service |
 | `config/hypr/`, `config/quickshell/`, `config/kitty/`, `config/nvim/`, `config/herdr/`, `config/zsh/`, `config/hyprquickframe/`, `config/hyprwhspr-rs/` | Configs deployed to `~/.config/` |
 | `config/matugen/` | Theme templates, startup defaults, and ownership documentation |
 | `config/agents/shared.md` | Shared global instructions deployed to Claude Code and Codex |
+| `pkgs/` | Locally maintained packages not available from nixpkgs |
 | `scripts/set-wallpaper.sh` | Wallpaper setter (awww) + matugen retheme → `~/Scripts/` |
 | `scripts/misc/` | Output and region screenshot helpers → `~/.local/bin/misc/` |
 | `docs/installation.md` | Install from the live ISO, then rebuilding and upgrading |
@@ -271,4 +276,5 @@ installed).
   expecting remote access.
 - **Quickshell does not reload on rebuild.** `nixos-rebuild switch` replaces the
   symlinks in `~/.config/quickshell/`, but the running service keeps the old QML
-  until `systemctl --user restart quickshell`.
+  until `systemctl --user restart quickshell`. Applications launched by the
+  shell run in independent UWSM scopes, so restarting it does not close them.

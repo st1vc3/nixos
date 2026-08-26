@@ -54,6 +54,11 @@ PanelWindow {
         grid.positionViewAtIndex(grid.currentIndex, GridView.Contain);
     }
 
+    function moveSelectionRow(delta) {
+        const columns = Math.max(1, Math.floor(grid.width / grid.cellWidth));
+        moveSelection(delta * columns);
+    }
+
     function applyCurrent() {
         if (grid.currentIndex >= 0 && grid.currentIndex < filteredWallpapers.length)
             apply(filteredWallpapers[grid.currentIndex]);
@@ -140,11 +145,11 @@ PanelWindow {
                             grid.forceActiveFocus();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Down) {
-                            root.moveSelection(3);
+                            root.moveSelectionRow(1);
                             grid.forceActiveFocus();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Up) {
-                            root.moveSelection(-3);
+                            root.moveSelectionRow(-1);
                             grid.forceActiveFocus();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
@@ -189,10 +194,10 @@ PanelWindow {
                         root.moveSelection(1);
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Down || event.key === Qt.Key_J) {
-                        root.moveSelection(3);
+                        root.moveSelectionRow(1);
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Up || event.key === Qt.Key_K) {
-                        root.moveSelection(-3);
+                        root.moveSelectionRow(-1);
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                         root.applyCurrent();

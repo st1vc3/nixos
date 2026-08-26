@@ -25,6 +25,9 @@
     username = "stivce";
     homeDirectory = "/home/stivce";
     stateVersion = "26.05";
+    # GNOME Calendar requires the timezone database path when launched inside
+    # an isolated UWSM application scope.
+    sessionVariables.TZDIR = "/etc/zoneinfo";
 
     file = {
       "Pictures/wallpapers".source = inputs.wallpapers;

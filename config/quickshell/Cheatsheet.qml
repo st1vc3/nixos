@@ -130,6 +130,7 @@ PanelWindow {
                 { keys: "Ctrl F", text: "Fuzzy files, no hidden" },
                 { keys: "Ctrl T", text: "Fuzzy files, all" },
                 { keys: "Up / Down", text: "Match typed history" },
+                { keys: "Ctrl/Alt Backspace", text: "Delete previous word" },
                 { keys: "Esc", text: "Vi command mode" }
             ]
         }

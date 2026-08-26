@@ -67,6 +67,7 @@ in
             Unit = {
               Description = "Quickshell desktop shell";
               PartOf = [ "graphical-session.target" ];
+              After = [ "graphical-session.target" ];
             };
             Service = {
               ExecStart = lib.getExe pkgs.quickshell;

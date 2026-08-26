@@ -1,10 +1,10 @@
 # Configuration review handoff
 
-Last updated: 2026-08-18
+Last updated: 2026-08-26
 
 ## Working agreement
 
-- Work through `tofix` one item at a time.
+- Work through `docs/review/todo.md` one item at a time.
 - Explain the proposed change and wait for approval before implementing it.
 - Preserve unrelated working-tree changes and do not commit automatically.
 
@@ -44,7 +44,8 @@ Last updated: 2026-08-18
     - Zsh and Bash interactive/non-interactive startup tests passed.
 
 The user explicitly asked to leave the `grep=rg` alias and NVM configuration
-unchanged. CurseBreaker was later removed when Instawow became its replacement.
+unchanged. CurseBreaker was replaced by Instawow, which was later replaced by
+the CurseForge app.
 16. Cleaned up the Neovim configuration:
     - Removed the duplicate system-level Neovim package; Home Manager remains
       its sole owner.

@@ -154,7 +154,8 @@ The interactive shell also provides `rebuild_test` for a temporary activation,
 [`rollback.md`](rollback.md) before relying on Snapper for file recovery.
 
 A rebuild deploys the Quickshell configuration but does not reload the running
-shell, which keeps the old QML until the user service is restarted:
+shell, which keeps the old QML until the user service is restarted. Launcher
+applications run in independent UWSM scopes and remain open across the restart:
 
 ```bash
 systemctl --user restart quickshell

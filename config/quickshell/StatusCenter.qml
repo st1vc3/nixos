@@ -12,24 +12,30 @@ import Quickshell.Wayland
 PanelWindow {
     id: root
     anchors.top: true
+    anchors.left: true
     anchors.right: true
-    margins.right: BarMetrics.edgeMargin
+    anchors.bottom: true
     exclusiveZone: -1
     color: "transparent"
-    implicitWidth: 380
-    implicitHeight: BarMetrics.stripHeight + panel.openHeight
     visible: true
 
     WlrLayershell.namespace: "quickshell-status-center"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
-    mask: Region { item: ShellState.statusCenterOpen ? panel : closedInputRegion }
+    mask: Region { item: ShellState.statusCenterOpen ? dismissArea : closedInputRegion }
 
     Item {
         id: closedInputRegion
         width: 0
         height: 0
+    }
+
+    Item {
+        id: dismissArea
+        anchors.fill: parent
+        visible: ShellState.statusCenterOpen
+        TapHandler { onTapped: root.close() }
     }
 
     readonly property var adapter: Bluetooth.defaultAdapter
@@ -63,7 +69,8 @@ PanelWindow {
         anchors.topMargin: BarMetrics.stripHeight
         // Keep the panel horizontally settled beneath the button. Animating
         // this width while right-anchored makes it look like a side drawer.
-        width: parent.width
+        width: 380
+        anchors.rightMargin: BarMetrics.edgeMargin
         readonly property real openHeight: 690
         readonly property real closedHeight: BarMetrics.pillHeight
 
@@ -71,6 +78,8 @@ PanelWindow {
         radius: ShellState.statusCenterOpen ? 20 : 13
         clip: true
         color: ShellState.statusCenterOpen ? Colors.glass(0.6) : "transparent"
+
+        TapHandler { gesturePolicy: TapHandler.ReleaseWithinBounds }
 
         Behavior on height {
             // No back-ease here either, for the same reason as the
@@ -116,15 +125,19 @@ PanelWindow {
                         anchors.fill: parent; anchors.margins: 14; spacing: 8
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { text: SystemStatus.weatherIcon; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 28; color: Colors.accent }
+                            Text { text: SystemStatus.weatherIcon; font.pixelSize: 28; color: Colors.accent }
                             ColumnLayout {
-                                Layout.fillWidth: true; spacing: 1
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                spacing: 1
                                 Text {
                                     id: weatherAddress
+                                    Layout.fillWidth: true
                                     text: SystemStatus.weatherLocation || "Set weather location"
                                     color: addressHover.hovered ? Colors.accent : Colors.text
                                     font.pixelSize: 14
                                     font.bold: true
+                                    elide: Text.ElideRight
                                     HoverHandler { id: addressHover; cursorShape: Qt.PointingHandCursor }
                                     TapHandler {
                                         onTapped: {
@@ -139,7 +152,13 @@ PanelWindow {
                                 }
                                 Text { text: SystemStatus.weatherError || SystemStatus.weatherDescription || "Enter an address below"; color: Colors.subtext; font.pixelSize: 12 }
                             }
-                            Text { text: SystemStatus.weatherLoading ? "…" : SystemStatus.weatherTemp; color: Colors.text; font.pixelSize: 28; font.bold: true }
+                            Text {
+                                Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                                text: SystemStatus.weatherLoading ? "…" : SystemStatus.weatherTemp
+                                color: Colors.text
+                                font.pixelSize: 28
+                                font.bold: true
+                            }
                         }
                         TextField {
                             id: locationInput

@@ -29,8 +29,6 @@ Detailed implementation notes and validation results are recorded in
 - [x] Add a Quickshell power menu.
 - [x] Add a Quickshell wallpaper and theme switcher.
 
-## Remaining
-
 - [x] Move CPU microcode configuration into the hardware module.
 - [x] Configure desktop portal preference order for Hyprland.
 - [x] Add a snapshot subvolume and snapshot tooling.

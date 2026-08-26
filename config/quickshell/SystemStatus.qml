@@ -28,9 +28,12 @@ Singleton {
     property string weatherLocation: weatherSettings.location
     property string weatherTemp: ""
     property string weatherDescription: ""
-    property string weatherIcon: ""
+    property string weatherIcon: "☁"
     property bool weatherLoading: false
     property string weatherError: ""
+    property real weatherLatitude: NaN
+    property real weatherLongitude: NaN
+    property bool weatherGeocodeFallback: false
 
     PwObjectTracker { objects: [root.sink, root.source] }
 
@@ -54,25 +57,81 @@ Singleton {
         if (!clean) return;
         weatherSettings.location = clean;
         weatherLocation = clean;
+        weatherLatitude = NaN;
+        weatherLongitude = NaN;
+        weatherGeocodeFallback = false;
         refreshWeather();
     }
     function refreshWeather() {
         if (!weatherLocation) return;
         weatherLoading = true;
         weatherError = "";
-        weatherProc.command = ["curl", "--fail", "--silent", "--show-error", "--max-time", "10",
-            "https://wttr.in/" + encodeURIComponent(weatherLocation) + "?format=j1"];
-        weatherProc.running = true;
+        if (isNaN(weatherLatitude) || isNaN(weatherLongitude)) {
+            startWeatherGeocode(weatherLocation);
+        } else {
+            refreshWeatherForecast();
+        }
+    }
+    function startWeatherGeocode(query) {
+        weatherGeocodeProc.command = ["curl", "--fail", "--silent", "--show-error",
+            "--max-time", "10", "https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name="
+            + encodeURIComponent(query)];
+        weatherGeocodeProc.running = true;
+    }
+    function parseWeatherLocation(text) {
+        try {
+            const data = JSON.parse(text);
+            if (!data.results || data.results.length === 0) {
+                // The API accepts cities and postal codes rather than street
+                // addresses. Preserve the full label in the UI, but retry its
+                // trailing city token before reporting it as unknown.
+                const tokens = weatherLocation.trim().split(/\s+/);
+                if (!weatherGeocodeFallback && tokens.length > 1) {
+                    weatherGeocodeFallback = true;
+                    startWeatherGeocode(tokens[tokens.length - 1]);
+                    return;
+                }
+                throw new Error("location not found");
+            }
+            weatherLatitude = data.results[0].latitude;
+            weatherLongitude = data.results[0].longitude;
+            refreshWeatherForecast();
+        } catch (e) {
+            weatherLoading = false;
+            weatherError = "Location not found";
+        }
+    }
+    function refreshWeatherForecast() {
+        weatherForecastProc.command = ["curl", "--fail", "--silent", "--show-error",
+            "--max-time", "10", "https://api.open-meteo.com/v1/forecast?latitude="
+            + weatherLatitude + "&longitude=" + weatherLongitude
+            + "&current=temperature_2m,weather_code&forecast_days=1"];
+        weatherForecastProc.running = true;
+    }
+    function weatherLabel(code) {
+        if (code === 0) return "Clear";
+        if (code <= 3) return code === 1 ? "Mainly clear" : code === 2 ? "Partly cloudy" : "Overcast";
+        if (code === 45 || code === 48) return "Fog";
+        if (code >= 51 && code <= 57) return "Drizzle";
+        if (code >= 61 && code <= 67) return "Rain";
+        if (code >= 71 && code <= 77) return "Snow";
+        if (code >= 80 && code <= 82) return "Rain showers";
+        if (code >= 85 && code <= 86) return "Snow showers";
+        if (code >= 95) return "Thunderstorm";
+        return "Cloudy";
     }
     function parseWeather(text) {
         weatherLoading = false;
         try {
             const data = JSON.parse(text);
-            const current = data.current_condition[0];
-            weatherTemp = current.temp_C + "°";
-            weatherDescription = current.weatherDesc[0].value;
-            const code = parseInt(current.weatherCode);
-            weatherIcon = code === 113 ? "" : code === 116 ? "" : code >= 200 && code < 400 ? "" : code >= 300 && code < 600 ? "" : code >= 600 && code < 700 ? "" : "";
+            const current = data.current;
+            const code = parseInt(current.weather_code);
+            weatherTemp = Math.round(current.temperature_2m) + "°";
+            weatherDescription = weatherLabel(code);
+            weatherIcon = code === 0 ? "☀" : code === 1 || code === 2 ? "⛅" : code === 3 ? "☁"
+                : (code >= 51 && code <= 67) || (code >= 80 && code <= 82) ? "☂"
+                : (code >= 71 && code <= 77) || (code >= 85 && code <= 86) ? "❄"
+                : code >= 95 ? "⚡" : "☁";
         } catch (e) { weatherError = "Weather unavailable"; }
     }
     function refreshVpn() { vpnProc.running = true }
@@ -159,7 +218,17 @@ Singleton {
     }
 
     Process {
-        id: weatherProc
+        id: weatherGeocodeProc
+        stdout: StdioCollector { onStreamFinished: root.parseWeatherLocation(this.text) }
+        onExited: code => {
+            if (code !== 0) {
+                root.weatherLoading = false;
+                root.weatherError = "Location lookup unavailable";
+            }
+        }
+    }
+    Process {
+        id: weatherForecastProc
         stdout: StdioCollector { onStreamFinished: root.parseWeather(this.text) }
         onExited: code => {
             root.weatherLoading = false;
@@ -203,15 +272,18 @@ Singleton {
     }
     Process { id: wifiDisconnectProc; onExited: root.refreshWifi() }
     Timer {
-        interval: 5000
+        interval: 30000
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: {
-            root.refreshVpn();
-            root.refreshAddresses();
-            root.refreshWifi();
-        }
+        onTriggered: root.refreshVpn()
+    }
+    Timer {
+        interval: 30000
+        running: ShellState.statusCenterOpen
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: { root.refreshAddresses(); root.refreshWifi(); }
     }
     Timer { interval: 900000; running: root.weatherLocation.length > 0; repeat: true; triggeredOnStart: true; onTriggered: root.refreshWeather() }
 

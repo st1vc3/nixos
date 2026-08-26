@@ -18,7 +18,7 @@ PanelWindow {
     readonly property var actions: [
         { name: "Lock", icon: "󰌾", command: [Quickshell.env("HOME") + "/.config/hypr/start-hyprlock"], confirm: false },
         { name: "Suspend", icon: "󰒲", command: ["systemctl", "suspend"], confirm: false },
-        { name: "Logout", icon: "󰍃", command: ["hyprctl", "dispatch", "exit"], confirm: true },
+        { name: "Logout", icon: "󰍃", command: ["uwsm", "stop"], confirm: true },
         { name: "Reboot", icon: "󰜉", command: ["systemctl", "reboot"], confirm: true },
         { name: "Shutdown", icon: "󰐥", command: ["systemctl", "poweroff"], confirm: true }
     ]
@@ -108,7 +108,7 @@ PanelWindow {
 
             if (root.pendingAction.length > 0) {
                 if (event.key === Qt.Key_Left || event.key === Qt.Key_Up || event.key === Qt.Key_H || event.key === Qt.Key_K) {
-                    root.confirmationIndex = (root.confirmationIndex + 1) % 2;
+                    root.confirmationIndex = (root.confirmationIndex - 1 + 2) % 2;
                     event.accepted = true;
                 } else if (event.key === Qt.Key_Right || event.key === Qt.Key_Down || event.key === Qt.Key_L || event.key === Qt.Key_J) {
                     root.confirmationIndex = (root.confirmationIndex + 1) % 2;

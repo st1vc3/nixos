@@ -53,7 +53,7 @@ PanelWindow {
     // --- Applications -------------------------------------------------------
     readonly property var applications: DesktopEntries.applications.values
         .filter(entry => !entry.noDisplay)
-        .sort((a, b) => b.name.localeCompare(a.name))
+        .sort((a, b) => a.name.localeCompare(b.name))
     readonly property var filteredApplications: {
         const terms = search.text.toLowerCase().trim().split(/\s+/).filter(Boolean);
         if (terms.length === 0)
@@ -120,6 +120,7 @@ PanelWindow {
     // Id of the image the preview belongs to, so a late decode can't attach to
     // the wrong (or no) selection.
     property string previewId: ""
+    property int previewRequest: 0
 
     // --- SSH ----------------------------------------------------------------
     property var sshHosts: []
@@ -167,7 +168,8 @@ PanelWindow {
         if (!entry)
             return;
         close();
-        entry.execute();
+        appLauncher.command = ["uwsm", "app", "--", entry.id + ".desktop"];
+        appLauncher.startDetached();
     }
 
     // App-mode rows are either a command (switch mode) or a desktop entry.
@@ -236,16 +238,16 @@ PanelWindow {
         if (!target.length)
             return;
         close();
-        sshLauncher.command = ["kitty", "ssh", target];
+        sshLauncher.command = ["uwsm", "app", "--", "kitty", "ssh", target];
         sshLauncher.startDetached();
     }
 
-    // Attribute paths are safe (alnum . _ -), so a plain wl-copy is enough.
     function copyPackage(item) {
         if (!item)
             return;
         close();
-        clipCopy.command = ["sh", "-c", "printf %s 'nixpkgs#" + item.attr + "' | wl-copy"];
+        clipCopy.command = ["sh", "-c", "printf 'nixpkgs#%s' \"$1\" | wl-copy",
+                            "nix-copy", item.attr];
         clipCopy.startDetached();
     }
 
@@ -260,16 +262,22 @@ PanelWindow {
         const item = filteredClipboard[clipResults.currentIndex];
         if (!isImageClip(item))
             return;
-        previewId = item.id;
-        previewDims = clipDims(item);
-        const path = Quickshell.env("HOME") + "/.cache/quickshell/clip-preview-" + item.id;
-        clipPreview.targetId = item.id;
-        clipPreview.target = path;
         if (!/^\d+$/.test(item.id))
             return;
+        clipPreview.running = false;
+        previewRequest++;
+        previewId = item.id;
+        previewDims = clipDims(item);
+        const dir = Quickshell.env("XDG_RUNTIME_DIR") + "/quickshell";
+        const path = dir + "/clip-preview-" + item.id;
+        clipPreview.targetId = item.id;
+        clipPreview.target = path;
+        clipPreview.request = previewRequest;
         clipPreview.command = ["sh", "-c",
-            "mkdir -p \"$1\" && cliphist -db-path \"$2\" decode \"$3\" > \"$4\"",
-            "cliphist-preview", Quickshell.env("HOME") + "/.cache/quickshell",
+            "mkdir -p \"$1\"; tmp=$(mktemp \"$1/.clip-preview.XXXXXX\") || exit; "
+            + "trap 'rm -f -- \"$tmp\"' EXIT HUP INT TERM; "
+            + "cliphist -db-path \"$2\" decode \"$3\" > \"$tmp\" && mv -f -- \"$tmp\" \"$4\"",
+            "cliphist-preview", dir,
             cliphistDb, item.id, path];
         clipPreview.running = true;
     }
@@ -449,12 +457,14 @@ PanelWindow {
         id: clipPreview
         property string target: ""
         property string targetId: ""
+        property int request: 0
         onExited: function(exitCode, exitStatus) {
             // Only attach the result if the highlighted image is still the one
             // we decoded - guards against a stale/transient decode reviving the
             // card after the selection moved or cleared.
             if (exitCode === 0 && target.length > 0 && root.clipMode
-                    && clipResults.currentIndex >= 0 && root.previewId === targetId)
+                    && clipResults.currentIndex >= 0 && root.previewId === targetId
+                    && request === root.previewRequest)
                 root.previewSource = "file://" + target;
         }
     }
@@ -564,6 +574,7 @@ PanelWindow {
     }
 
     Process { id: clipCopy }
+    Process { id: appLauncher }
     Process { id: sshLauncher }
     Process { id: webOpen }
 

@@ -12,7 +12,7 @@ PanelWindow {
     property var modelData
     screen: modelData
 
-    readonly property int unread: Notifications.list.values ? Notifications.list.values.length : 0
+    readonly property int historyCount: Notifications.list.values ? Notifications.list.values.length : 0
 
     anchors.top: true
     anchors.right: true
@@ -84,7 +84,7 @@ PanelWindow {
                 // pill now meets the screen edge, so a corner dot would be
                 // clipped by it.
                 Rectangle {
-                    visible: bar.unread > 0
+                    visible: bar.historyCount > 0
                     width: 8
                     height: 8
                     radius: 4

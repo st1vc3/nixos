@@ -12,8 +12,8 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    // One entry per real mount: { target, used, size, pct }. `root` is the
-    // headline used for the ring; `disks` is the full list for the breakdown.
+    // One entry per real filesystem: { target, used, size, pct }. `root` is the
+    // headline used for the ring; `disks` is the deduplicated list.
     property var disks: []
     property var rootDisk: ({ target: "/", used: 0, size: 0, pct: 0 })
 
@@ -36,7 +36,7 @@ Singleton {
         // -B1: bytes. Exclude pseudo filesystems so the list is only real
         // storage. Fixed column order via --output so parsing is positional.
         command: [
-            "df", "-B1", "--output=target,used,size,pcent",
+            "df", "-B1", "--output=source,target,used,size,pcent",
             "-x", "tmpfs", "-x", "devtmpfs", "-x", "efivarfs",
             "-x", "overlay", "-x", "squashfs"
         ]
@@ -47,15 +47,23 @@ Singleton {
 
     function parse(text) {
         const out = [];
+        const seenSources = ({});
         const lines = text.trim().split("\n");
         for (let i = 1; i < lines.length; i++) {
             const parts = lines[i].trim().split(/\s+/);
-            if (parts.length < 4)
+            if (parts.length < 5)
                 continue;
+            const source = parts[0];
             const pct = parseInt(parts[parts.length - 1]) || 0;
             const size = parseInt(parts[parts.length - 2]) || 0;
             const used = parseInt(parts[parts.length - 3]) || 0;
-            const target = parts.slice(0, parts.length - 3).join(" ");
+            const target = parts.slice(1, parts.length - 3).join(" ");
+            // df reports identical whole-filesystem figures for every btrfs
+            // subvolume. Keep the first mount so this is an honest filesystem
+            // list instead of a duplicate pseudo-breakdown.
+            if (seenSources[source])
+                continue;
+            seenSources[source] = true;
             out.push({ target, used, size, pct });
         }
         root.disks = out;

@@ -106,6 +106,9 @@
   nixpkgs.config.allowUnfree = true;
   services.openssh = {
     enable = true;
+    # No authorized key is declared yet. Keep sshd available locally for
+    # configuration testing without exposing an unusable listener to the LAN.
+    openFirewall = false;
     settings = {
       # Remote access is key-only. Add an authorized key before expecting SSH
       # access to work.

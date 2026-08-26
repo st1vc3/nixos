@@ -1,5 +1,10 @@
 { lib, pkgs, ... }:
 
+let
+  setWallpaper = pkgs.writeShellScript "set-wallpaper" (
+    builtins.readFile ../scripts/set-wallpaper.sh
+  );
+in
 {
   # Auto-mount removable drives (USB sticks, SD cards) as soon as they are
   # plugged in, backed by the system udisks2 service (modules/desktop.nix).
@@ -17,6 +22,7 @@
       Unit = {
         Description = "Awww Wayland wallpaper daemon";
         PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
       };
       Service = {
         ExecStart = lib.getExe' pkgs.awww "awww-daemon";
@@ -35,7 +41,7 @@
       };
       Service = {
         Type = "oneshot";
-        ExecStart = "%h/Scripts/set-wallpaper.sh";
+        ExecStart = setWallpaper;
       };
       Install.WantedBy = [ "graphical-session.target" ];
     };
@@ -44,6 +50,7 @@
       Unit = {
         Description = "Hyprland idle management daemon";
         PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
       };
       Service = {
         ExecStart = lib.getExe pkgs.hypridle;
@@ -57,6 +64,7 @@
       Unit = {
         Description = "Hyprland PolicyKit authentication agent";
         PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
       };
       Service = {
         ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
