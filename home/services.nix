@@ -37,7 +37,10 @@ in
         Description = "Apply the default wallpaper and generated colour theme";
         PartOf = [ "graphical-session.target" ];
         Requires = [ "awww.service" ];
-        After = [ "awww.service" ];
+        After = [
+          "graphical-session.target"
+          "awww.service"
+        ];
       };
       Service = {
         Type = "oneshot";
