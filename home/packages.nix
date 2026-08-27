@@ -12,10 +12,25 @@ let
   curseforge = pkgs.callPackage ../pkgs/curseforge.nix { };
   helium = inputs.helium.packages.${system}.helium;
   hyprquickframe = inputs.hyprquickframe.packages.${system}.default;
+  trayscale = pkgs.trayscale;
   zen-browser = inputs.zen-browser.packages.${system}.default;
 in
 {
   programs.firefox.enable = true;
+
+  xdg.desktopEntries."dev.deedles.Trayscale" = {
+    name = "Tailscale";
+    genericName = "Tailscale Client";
+    comment = "Manage Tailscale connections";
+    exec = "${trayscale}/bin/trayscale %F";
+    icon = "dev.deedles.Trayscale";
+    terminal = false;
+    type = "Application";
+    categories = [
+      "Network"
+      "System"
+    ];
+  };
 
   home.packages = with pkgs; [
     awww
@@ -27,6 +42,7 @@ in
     eza
     fastfetch
     fd
+    filen-desktop
     fzf
     gnome-calendar
     grim
@@ -37,6 +53,7 @@ in
     hyprshutdown
     imagemagick
     kitty
+    keepassxc
     libnotify
     lutris
     matugen
@@ -50,6 +67,7 @@ in
     slurp
     starship
     telegram-desktop
+    trayscale
     unstable.herdr
     virt-manager
     volantes-cursors
