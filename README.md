@@ -213,7 +213,7 @@ across sessions.
 | `nixpkgs-unstable` | Selected user applications not available on stable |
 | `disko` | Declarative disk partitioning |
 | `home-manager` | `release-26.05` - per-user `$HOME` state |
-| `wallpapers` | [`st1vc3/wallpaper`](https://github.com/st1vc3/wallpaper), pinned (not a flake) |
+| `wallpapers` | `st1vc3/NIX-data`, private and fetched over SSH, pinned (not a flake) |
 | `silentSDDM` | [`uiriansan/SilentSDDM`](https://github.com/uiriansan/SilentSDDM) - SDDM theme |
 | `hyprquickframe` | [`Ronin-CK/HyprQuickFrame`](https://github.com/Ronin-CK/HyprQuickFrame) - region screenshot UI |
 | `zen-browser` / `helium` | Community flakes packaging the two browsers |
