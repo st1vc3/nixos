@@ -95,6 +95,10 @@
       seed "$HOME/.config/hypr/hyprlock-colors.conf" "${../config/matugen/defaults/hyprlock-colors.conf}"
       seed "$HOME/.config/kitty/colors.conf" "${../config/matugen/defaults/kitty-colors.conf}"
     '';
+
+    activation.createFilenDirectory = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      $DRY_RUN_CMD ${pkgs.coreutils}/bin/mkdir -p "$HOME/FILEN"
+    '';
   };
 
   xdg.configFile = {
