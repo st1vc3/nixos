@@ -47,6 +47,10 @@
     supportedFilesystems = [ "btrfs" ];
   };
   services.fstrim.enable = true;
+  services.tailscale = {
+    enable = true;
+    extraSetFlags = [ "--operator=stivce" ];
+  };
 
   nix = {
     gc = {
