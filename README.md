@@ -235,7 +235,7 @@ across sessions.
 | `modules/gaming.nix` | Steam, GameMode, and libvirt system services |
 | `modules/printing.nix` | CUPS, printer discovery, and the printer configuration UI |
 | `modules/snapshots.nix` | Snapper schedule and bounded root-snapshot retention |
-| `modules/stable-diffusion.nix` | Stable Diffusion Forge web UI service on localhost:7860 |
+| `home/stable-diffusion.nix` | On-demand Stable Diffusion Forge desktop application; launches Forge and opens localhost:7860 |
 | `home/default.nix` | home-manager wiring |
 | `home/stivce.nix` | User identity and shared configuration-file deployment |
 | `home/packages.nix`, `home/services.nix`, `home/theming.nix`, `home/neovim.nix`, `home/git.nix`, `home/gaming.nix` | Focused user packages, services, toolkit theme, editor, Git, and game launcher modules |

@@ -12,13 +12,8 @@
     ./modules/apps.nix
     ./modules/gaming.nix
     ./modules/snapshots.nix
-    ./modules/stable-diffusion.nix
     ./home
   ];
-
-  # Stable Diffusion Forge web UI on http://127.0.0.1:7860.
-  # See modules/stable-diffusion.nix.
-  myStableDiffusion.enable = true;
 
   boot = {
     loader = {
@@ -64,6 +59,13 @@
       experimental-features = [
         "nix-command"
         "flakes"
+      ];
+      # The on-demand Stable Diffusion application uses a CUDA package from
+      # nix-community. Without its cache, large CUDA dependencies such as NCCL
+      # would be compiled locally.
+      substituters = [ "https://nix-community.cachix.org" ];
+      trusted-public-keys = [
+        "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       ];
     };
   };
