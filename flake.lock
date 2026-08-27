@@ -265,17 +265,17 @@
     "wallpapers": {
       "flake": false,
       "locked": {
-        "lastModified": 1785627143,
-        "narHash": "sha256-59kFalnDqjpRaZHMvR6p5uZha8gq1k0D+DrRuI8w1PM=",
-        "owner": "st1vc3",
-        "repo": "wallpaper",
-        "rev": "dd8f0960165cfc31313d876ac9f7de346498a4f3",
-        "type": "github"
+        "lastModified": 1787741292,
+        "narHash": "sha256-JVKcL+RM0LbmSaVcFxG8PvI5zETeerFAsaJjhZV2NH4=",
+        "ref": "refs/heads/main",
+        "rev": "fba39a204bace1202a9374ff46d1b3b1977b6ecf",
+        "revCount": 6,
+        "type": "git",
+        "url": "ssh://git@github.com/st1vc3/NIX-data.git"
       },
       "original": {
-        "owner": "st1vc3",
-        "repo": "wallpaper",
-        "type": "github"
+        "type": "git",
+        "url": "ssh://git@github.com/st1vc3/NIX-data.git"
       }
     },
     "zen-browser": {

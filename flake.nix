@@ -16,7 +16,7 @@
     };
 
     wallpapers = {
-      url = "github:st1vc3/wallpaper";
+      url = "git+ssh://git@github.com/st1vc3/NIX-data.git";
       flake = false;
     };
 
