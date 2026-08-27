@@ -243,7 +243,7 @@ across sessions.
 | `config/agents/shared.md` | Shared global instructions deployed to Claude Code and Codex |
 | `pkgs/` | Locally maintained packages not available from nixpkgs |
 | `scripts/set-wallpaper.sh` | Wallpaper setter (awww) + matugen retheme → `~/Scripts/` |
-| `scripts/misc/` | Output and region screenshot helpers → `~/.local/bin/misc/` |
+| `scripts/start-optcg.sh`, `scripts/misc/` | One Piece TCG launcher and screenshot helpers → `~/.local/bin/` |
 | `docs/installation.md` | Install from the live ISO, then rebuilding and upgrading |
 | `docs/images/` | Screenshots used on this page |
 | `docs/snapshots.md` | Snapshot scope, existing-system migration, and routine commands |

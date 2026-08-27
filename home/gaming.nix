@@ -1,6 +1,8 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 {
+  home.packages = [ pkgs.unzip ];
+
   # Battle.net is not a package this repo installs. It runs from a
   # Lutris-managed wine prefix at ~/Games/battlenet, and is what World of
   # Warcraft (installed inside that prefix) is launched from.
@@ -24,6 +26,18 @@
     # installed. That is imperative state this repo does not manage, so the
     # launcher falls back to a generic icon if the prefix was never set up.
     icon = "lutris_battlenet";
+    terminal = false;
+    type = "Application";
+    categories = [ "Game" ];
+    startupNotify = true;
+  };
+
+  xdg.desktopEntries.optcg-sim = {
+    name = "One Piece TCG Sim";
+    genericName = "Card Game Simulator";
+    comment = "Play the One Piece Trading Card Game simulator";
+    exec = "${config.home.homeDirectory}/.local/bin/start-optcg";
+    icon = "applications-games";
     terminal = false;
     type = "Application";
     categories = [ "Game" ];

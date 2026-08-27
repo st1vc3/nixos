@@ -41,6 +41,11 @@
         executable = true;
       };
 
+      ".local/bin/start-optcg" = {
+        source = ../scripts/start-optcg.sh;
+        executable = true;
+      };
+
       # Paths below must match what config/hypr/hyprland.lua binds to.
       ".local/bin/misc/screenshot-region" = {
         source = ../scripts/misc/screenshot-region;
