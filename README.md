@@ -217,6 +217,7 @@ across sessions.
 | `silentSDDM` | [`uiriansan/SilentSDDM`](https://github.com/uiriansan/SilentSDDM) - SDDM theme |
 | `hyprquickframe` | [`Ronin-CK/HyprQuickFrame`](https://github.com/Ronin-CK/HyprQuickFrame) - region screenshot UI |
 | `zen-browser` / `helium` | Community flakes packaging the two browsers |
+| `stable-diffusion-webui` | [`Janrupf/stable-diffusion-webui-nix`](https://github.com/Janrupf/stable-diffusion-webui-nix) - Forge web UI; keeps its own nixpkgs, see the comment in `flake.nix` |
 
 ## Layout
 
@@ -234,6 +235,7 @@ across sessions.
 | `modules/gaming.nix` | Steam, GameMode, and libvirt system services |
 | `modules/printing.nix` | CUPS, printer discovery, and the printer configuration UI |
 | `modules/snapshots.nix` | Snapper schedule and bounded root-snapshot retention |
+| `modules/stable-diffusion.nix` | Stable Diffusion Forge web UI service on localhost:7860 |
 | `home/default.nix` | home-manager wiring |
 | `home/stivce.nix` | User identity and shared configuration-file deployment |
 | `home/packages.nix`, `home/services.nix`, `home/theming.nix`, `home/neovim.nix`, `home/git.nix`, `home/gaming.nix` | Focused user packages, services, toolkit theme, editor, Git, and game launcher modules |

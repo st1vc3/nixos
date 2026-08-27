@@ -46,6 +46,23 @@
       url = "github:oxcl/nix-flake-helium-browser";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # AUTOMATIC1111's WebUI is not in nixpkgs and cannot reasonably be: its
+    # launcher pip-installs into a venv and git-clones extensions on first run,
+    # which is the opposite of what a derivation can express. This flake packages
+    # the maintained Forge continuation of that UI instead, assembling the torch
+    # stack from upstream wheels rather than compiling it.
+    #
+    # Deliberately no `inputs.nixpkgs.follows`, unlike every other input here.
+    # The flake builds its own nixpkgs with `cudaSupport = true`, and the CUDA
+    # plus torch pinning it ships is only tested against the nixpkgs revision it
+    # locks. Pointing it at ours would silently swap that revision out on every
+    # `flake.lock` refresh, and a torch/CUDA mismatch surfaces as a runtime crash
+    # in the web UI rather than an evaluation error. The cost is a second nixpkgs
+    # in the lock file, which is the cheaper half of that trade.
+    stable-diffusion-webui = {
+      url = "github:Janrupf/stable-diffusion-webui-nix";
+    };
   };
 
   outputs =

@@ -12,8 +12,13 @@
     ./modules/apps.nix
     ./modules/gaming.nix
     ./modules/snapshots.nix
+    ./modules/stable-diffusion.nix
     ./home
   ];
+
+  # Stable Diffusion Forge web UI on http://127.0.0.1:7860.
+  # See modules/stable-diffusion.nix.
+  myStableDiffusion.enable = true;
 
   boot = {
     loader = {
