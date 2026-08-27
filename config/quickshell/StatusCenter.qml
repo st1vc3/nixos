@@ -21,7 +21,21 @@ PanelWindow {
 
     WlrLayershell.namespace: "quickshell-status-center"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    // Only ask for keyboard focus while the panel is actually open, the same
+    // way every other interactive surface here does it. `mask` governs pointer
+    // input, not keyboard focus, so an unconditional value here left a surface
+    // claiming keyboard interactivity for the entire session. Whenever no
+    // window holds focus, Hyprland parks focus on that surface and then will
+    // not hand it to a window that opens afterwards - measured by opening a
+    // terminal on an empty workspace, which received no activewindow event with
+    // this set unconditionally and does receive one now. A fresh login is
+    // exactly that state, which is why the first terminal after logging in came
+    // up unfocused while every later one was fine.
+    // The panel still needs real focus once open, for the weather location and
+    // Wi-Fi password fields below.
+    WlrLayershell.keyboardFocus: ShellState.statusCenterOpen
+        ? WlrKeyboardFocus.OnDemand
+        : WlrKeyboardFocus.None
 
     mask: Region { item: ShellState.statusCenterOpen ? dismissArea : closedInputRegion }
 
