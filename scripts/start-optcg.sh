@@ -6,6 +6,13 @@ set -euo pipefail
 root="${OPTCG_ROOT:-$HOME/Games/OPTCGSim}"
 mkdir -p "$root"
 
+# Check before extraction, permission changes or retention cleanup: an older
+# running release can still need assets and side binaries from its directory.
+if pgrep -u "$(id -u)" -f 'OPTCGSim\.x86_64' >/dev/null; then
+  echo "start-optcg: OPTCGSim is already running" >&2
+  exit 0
+fi
+
 # Consider both installed directories and downloaded archives. Version sorting
 # makes 1.52a_Linux newer than 1.42c_Linux without hard-coding the current
 # release. The desktop entry always invokes this script, so it never needs a
@@ -66,8 +73,15 @@ if [[ ! -f "$build/OPTCGSim.x86_64" ]]; then
   fi
 fi
 
-# The ZIP ships the binary without the executable bit.
-[[ -x "$build/OPTCGSim.x86_64" ]] || chmod +x "$build/OPTCGSim.x86_64"
+# The ZIP ships binaries without the executable bit. This covers the sim itself
+# and the bundled side binaries under StreamingAssets, such as the OPBounty
+# ranked client. The sim starts those through Mono's UseShellExecute, which only
+# execs a file that carries the executable bit and otherwise hands the path to
+# xdg-open - where an application/x-executable association silently opens
+# something else (Steam) instead of the game.
+while IFS= read -r -d '' binary; do
+  [[ -x "$binary" ]] || chmod +x "$binary"
+done < <(find "$build" -type f -name '*.x86_64' -print0)
 
 # Retain complete artifacts for only the newest two release names. A release
 # can have both an archive and an extracted directory; those count as one
@@ -92,12 +106,6 @@ done
 if ! command -v steam-run >/dev/null; then
   echo "start-optcg: steam-run not found - enable programs.steam in the NixOS config" >&2
   exit 1
-fi
-
-# One instance only, regardless of how the running copy was started.
-if pgrep -u "$(id -u)" -f 'OPTCGSim\.x86_64' >/dev/null; then
-  echo "start-optcg: OPTCGSim is already running" >&2
-  exit 0
 fi
 
 echo "start-optcg: launching $newest" >&2
