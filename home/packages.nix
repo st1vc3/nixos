@@ -44,6 +44,7 @@ in
     fd
     filen-desktop
     fzf
+    gh
     gnome-calendar
     grim
     helium
