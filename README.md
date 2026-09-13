@@ -274,8 +274,9 @@ installed).
   `hardware.nvidia.open = true` + modesetting, the NVIDIA card is auto-selected.
 - **Fresh accounts start locked.** The installation guide sets the `stivce`
   password interactively before reboot, so no credential is stored in Git.
-  SSH password and root logins are disabled; add an authorized key before
-  expecting remote access.
+  SSH password login is enabled for normal users; root and keyboard-interactive
+  logins are disabled. Port 22 is open on all interfaces, including LAN and
+  Tailscale. See `configuration.nix` for the intended network exposure.
 - **Quickshell does not reload on rebuild.** `nixos-rebuild switch` replaces the
   symlinks in `~/.config/quickshell/`, but the running service keeps the old QML
   until `systemctl --user restart quickshell`. Applications launched by the
