@@ -6,7 +6,8 @@ Target: physical machine, AMD CPU + NVIDIA GPU, UEFI, btrfs (unencrypted), Hyprl
 
 Confirm that `disko.nix` names the intended disk by its stable
 `/dev/disk/by-id/...` path. Change it when installing on different hardware
-(you can also do this live on the ISO). Everything else is ready to go.
+(you can also do this live on the ISO). You also need GitHub access to the
+intentionally private `st1vc3/NIX-data` wallpaper repository (step 4).
 
 ## 1. Boot the NixOS minimal ISO
 
@@ -41,8 +42,8 @@ disk will be **completely erased**.
 ## 4. Get the config
 
 ```bash
-nix-shell -p git
-git clone https://github.com/st1vc3/nixos /mnt-config
+nix-shell -p git openssh
+git clone --branch staging https://github.com/st1vc3/nixos /mnt-config
 cd /mnt-config
 ```
 
@@ -51,6 +52,39 @@ Edit `disko.nix` so `device = "..."` matches the by-id path from step 3:
 ```bash
 nano disko.nix
 ```
+
+### Authorize the private data input before erasing anything
+
+The wallpaper repository stays private. Nix fetches it over SSH while evaluating
+the complete system, so the root shell on the live ISO needs read access.
+One option is a temporary, read-only GitHub deploy key:
+
+```bash
+install -d -m700 /root/.ssh
+ssh-keygen -t ed25519 -f /root/.ssh/nixos-install-key -C nixos-install
+eval "$(ssh-agent -s)"
+ssh-add /root/.ssh/nixos-install-key
+cat /root/.ssh/nixos-install-key.pub
+export GIT_SSH_COMMAND='ssh -i /root/.ssh/nixos-install-key -o IdentitiesOnly=yes'
+```
+
+Add the displayed **public** key in the `NIX-data` repository's Settings > Deploy
+keys, leaving write access disabled. Keep the private key outside `/mnt-config`.
+Verify GitHub's host fingerprint when SSH first prompts, then check repository
+access and force evaluation of the complete system:
+
+```bash
+git ls-remote ssh://git@github.com/st1vc3/NIX-data.git HEAD
+nix --extra-experimental-features "nix-command flakes" eval --raw \
+  --no-write-lock-file .#nixosConfigurations.nixos.config.system.build.toplevel.drvPath
+```
+
+**Both commands must succeed before step 5.** Evaluating only the disk device
+does not force the wallpaper input and is not an access check. Keep this shell
+and its SSH agent available through installation. After a successful install,
+remove the temporary deploy key from GitHub and stop its agent with `ssh-agent -k`.
+Set up your normal GitHub SSH access on the installed system before future input
+updates; the temporary ISO key is not copied to the installed account.
 
 ## 5. Partition + format + mount (disko)
 
@@ -195,6 +229,11 @@ choice in [`../config/zsh/aliases.zsh`](../config/zsh/aliases.zsh).
 
 Once the config is solid you can install unattended from your Mac to a booted
 target (any Linux you can SSH into as root, or the NixOS ISO):
+
+Before invoking nixos-anywhere, authorize the invoking machine's SSH key for
+read access to `NIX-data` and run the two preflight commands from step 4 there.
+Use the `staging` checkout. The initiating machine evaluates the flake, so access
+to the installation target alone does not grant access to the private input.
 
 ```bash
 # On the live ISO, nix-command/flakes aren't enabled by default, so pass the
