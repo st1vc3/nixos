@@ -88,6 +88,14 @@ rollback_system() {
 alias cc="claude --dangerously-skip-permissions"
 alias cx="codex --dangerously-bypass-approvals-and-sandbox"
 
+# Launch or reattach to the persistent `cc` Herdr session on the lab
+# controller. The server runs there, so agents keep working after the link
+# drops; only the thin client is local, and it reads this machine's
+# config/herdr/config.toml, so keybindings and theme stay the same.
+rcc() {
+  herdr --remote stivce@controller --session cc
+}
+
 # =========================================================
 # misc
 # =========================================================
