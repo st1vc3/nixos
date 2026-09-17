@@ -168,4 +168,24 @@
     };
 
   };
+
+  # The lab controller (persistent Herdr agent sessions, reached over SSH) has
+  # no DNS or mDNS record on the LAN, so `ssh controller` cannot resolve.
+  # Declare the alias here instead of leaving an unmanaged ~/.ssh/config: the
+  # name is what shell helpers and Herdr's --remote target refer to.
+  programs.ssh = {
+    enable = true;
+
+    # Home Manager's legacy defaults are slated for removal and warn on every
+    # evaluation. The values they set match OpenSSH's own, so opting out
+    # changes no behaviour and keeps rebuilds warning-free.
+    enableDefaultConfig = false;
+
+    # `matchBlocks` is a deprecated alias for `settings`; attribute names are
+    # Host patterns and keys are upstream ssh_config(5) directives.
+    settings.controller = {
+      HostName = "10.0.0.217";
+      User = "stivce";
+    };
+  };
 }
