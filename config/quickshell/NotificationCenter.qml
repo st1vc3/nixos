@@ -18,6 +18,16 @@ PanelWindow {
     // exact status-pill geometry before growing into the notification panel.
     exclusiveZone: -1
     color: "transparent"
+    // Only stay mapped while the panel is actually on screen; see the matching
+    // comment in StatusCenter.qml for why. Short version: a mapped fullscreen
+    // overlay surface permanently blocks direct scanout, so the compositor
+    // repaints the entire output every frame and the hardware cursor gets
+    // paced by that repaint. The `mask` below makes this surface
+    // click-through, which is a separate concern - the compositor counts a
+    // mapped overlay whether or not it takes input.
+    // Closing is animated, so the surface outlives ShellState.centerOpen by
+    // the length of the shrink back to the pill.
+    visible: ShellState.centerOpen || glass.height > glass.closedHeight
 
     WlrLayershell.namespace: "quickshell-center"
     WlrLayershell.layer: WlrLayer.Overlay
@@ -46,8 +56,13 @@ PanelWindow {
         id: glass
         // This is a top-down popover, not a drawer from the screen edge.
         width: root.panelWidth
-        // Match the strip above the panel at the bottom edge as well.
-        readonly property real openHeight: parent.height - 2 * BarMetrics.stripHeight
+        // Match the strip above the panel at the bottom edge as well. This
+        // reads the screen rather than `parent.height`: the surface now unmaps
+        // when the panel is closed, and an unmapped layer surface has no
+        // configured size to inherit, which would leave the open height
+        // negative at exactly the moment the panel is asked to grow.
+        readonly property real openHeight:
+            (root.screen ? root.screen.height : 0) - 2 * BarMetrics.stripHeight
         readonly property real closedHeight: BarMetrics.pillHeight
 
         height: ShellState.centerOpen ? openHeight : closedHeight
