@@ -14,6 +14,7 @@
     ./packages.nix
     ./quickshell.nix
     ./services.nix
+    ./stable-diffusion.nix
     ./theming.nix
   ];
 

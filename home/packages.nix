@@ -12,7 +12,7 @@ let
   curseforge = pkgs.callPackage ../pkgs/curseforge.nix { };
   helium = inputs.helium.packages.${system}.helium;
   hyprquickframe = inputs.hyprquickframe.packages.${system}.default;
-  trayscale = pkgs.trayscale;
+  inherit (pkgs) trayscale;
   zen-browser = inputs.zen-browser.packages.${system}.default;
 in
 {
@@ -44,6 +44,7 @@ in
     fd
     filen-desktop
     fzf
+    gh
     gnome-calendar
     grim
     helium

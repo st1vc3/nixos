@@ -17,7 +17,22 @@ PanelWindow {
     anchors.bottom: true
     exclusiveZone: -1
     color: "transparent"
-    visible: true
+    // Only stay mapped while the panel is actually on screen. A mapped
+    // fullscreen surface on the overlay layer blocks Hyprland's solitary path
+    // for good - `hyprctl monitors` reports solitaryBlockedBy: ["OVERLAYS"] -
+    // so a fullscreen client never reaches direct scanout and the compositor
+    // composites the whole output every frame instead of handing the client's
+    // buffer to the display. On a 4K/240Hz output that cost is not small: with
+    // this surface and the notification centre both mapped, Hyprland burned as
+    // much GPU as the fullscreen game it was drawing over, and because NVIDIA
+    // serialises atomic commits per CRTC the cursor-plane updates queue behind
+    // those composites - the pointer ends up paced by the compositor's frame
+    // rate rather than by the mouse. `mask` below keeps the surface
+    // click-through, but that governs pointer input only; the compositor still
+    // counts a mapped overlay either way.
+    // The close animation outlives the state flag, so the surface has to stay
+    // up until the panel has finished shrinking back down to the pill.
+    visible: ShellState.statusCenterOpen || panel.height > panel.closedHeight
 
     WlrLayershell.namespace: "quickshell-status-center"
     WlrLayershell.layer: WlrLayer.Overlay

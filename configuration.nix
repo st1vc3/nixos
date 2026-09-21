@@ -46,11 +46,6 @@
     };
     supportedFilesystems = [ "btrfs" ];
   };
-  services.fstrim.enable = true;
-  services.tailscale = {
-    enable = true;
-    extraSetFlags = [ "--operator=stivce" ];
-  };
 
   nix = {
     gc = {
@@ -63,6 +58,13 @@
       experimental-features = [
         "nix-command"
         "flakes"
+      ];
+      # The on-demand Stable Diffusion application uses a CUDA package from
+      # nix-community. Without its cache, large CUDA dependencies such as NCCL
+      # would be compiled locally.
+      substituters = [ "https://nix-community.cachix.org" ];
+      trusted-public-keys = [
+        "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       ];
     };
   };
@@ -107,18 +109,66 @@
     memoryPercent = 50;
   };
 
+  # On 2026-09-11 a Discord (Electron) SIGTRAP took systemd-coredump 62s of wall
+  # clock, 34.6s of CPU and a 32G memory peak to handle, and because systemd
+  # cannot reap the dying process until the handler is done, it stalled the
+  # whole Hyprland session teardown and left a black screen behind.
+  #
+  # That 32G is not a coincidence: it is exactly ProcessSizeMax's default on
+  # 64-bit, i.e. how much of the core systemd-coredump is willing to read in
+  # order to generate a stack trace. Electron reserves an enormous address
+  # space, so it hits that ceiling where a normal process never would. Cap the
+  # sizes so a browser-engine crash is dumped cheaply or not at all.
+  #
+  # Deliberately not disabling coredumps outright - they are what made the
+  # above diagnosable in the first place.
+  systemd.coredump.settings.Coredump = {
+    # Above this, no stack trace is generated. The core itself is still written
+    # (that is unavoidable unless this is 0), it just stops being expensive.
+    ProcessSizeMax = "2G";
+    # Above this, the core is not kept on disk at all.
+    ExternalSizeMax = "2G";
+    # Total budget for /var/lib/systemd/coredump. The default is 10% of the
+    # disk, which on this NVMe is far more than crash dumps deserve.
+    MaxUse = "4G";
+  };
+
+  # Belt and braces for the memory spike specifically. The size limits above
+  # bound how much of the core is *read*, but the core is written to disk
+  # either way and that page cache is accounted to this cgroup, so the peak is
+  # not fully bounded by ProcessSizeMax alone. A hard limit turns the balloon
+  # into ordinary writeback; worst case the handler dies and we lose one core
+  # dump, which beats putting 32G of pressure on a live desktop session.
+  systemd.services."systemd-coredump@".serviceConfig.MemoryMax = "2G";
+
   nixpkgs.config.allowUnfree = true;
-  services.openssh = {
-    enable = true;
-    # No authorized key is declared yet. Keep sshd available locally for
-    # configuration testing without exposing an unusable listener to the LAN.
-    openFirewall = false;
-    settings = {
-      # Remote access is key-only. Add an authorized key before expecting SSH
-      # access to work.
-      PasswordAuthentication = false;
-      KbdInteractiveAuthentication = false;
-      PermitRootLogin = "no";
+  services = {
+    fstrim.enable = true;
+    tailscale = {
+      enable = true;
+      extraSetFlags = [ "--operator=stivce" ];
+    };
+    openssh = {
+      enable = true;
+      # Opens port 22 on every interface, which here means the LAN and tailscale0.
+      openFirewall = true;
+      settings = {
+        # Deliberately password auth rather than key-only: the point is to be able
+        # to reach this box from any device without enrolling that device's public
+        # key here first. The trade is that sshd becomes brute-forceable, which is
+        # only acceptable because the host sits behind the router's NAT with no
+        # port forward for 22.
+        #
+        # If this ever gets a public address or a :22 forward, flip this back to
+        # false and enrol keys in users.users.stivce.openssh.authorizedKeys.keys
+        # instead - do not leave both a public listener and password auth on.
+        PasswordAuthentication = true;
+        # Password auth above is the single interactive path; PAM's keyboard-
+        # interactive is a second one that would also accept passwords, so leave
+        # it off rather than widening the surface for no gain.
+        KbdInteractiveAuthentication = false;
+        PermitRootLogin = "no";
+      };
     };
   };
   system.stateVersion = "26.05";

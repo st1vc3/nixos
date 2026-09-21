@@ -24,11 +24,11 @@
 # (X-AppImage-Version).
 let
   pname = "curseforge";
-  version = "1.316.0-37372";
+  version = "1.321.1-39714";
 
   src = fetchurl {
     url = "https://curseforge.overwolf.com/downloads/curseforge-latest-linux.AppImage";
-    hash = "sha256-ZH4ZkFSoT8bQgcQPkszcux4gds4DHwrD7Vyub+13mgQ=";
+    hash = "sha256-4DQZNlrJGY1gGAyqB74+vhhI9lCDPAEQrayhSX5G0Uc=";
   };
 
   # Unpacked separately so the desktop entry and icons can be installed into

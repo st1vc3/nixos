@@ -236,10 +236,17 @@ hl.config({
     },
 })
 
--- NVIDIA: hardware cursors glitch on nvidia-drm
+
+-- Force hardware cursors. Hyprland's default here is "auto", which disables
+-- them whenever it detects NVIDIA - that check predates the open kernel module
+-- and still fires on 595.x, leaving a software cursor that only moves when a
+-- full 3840x2160 frame is rendered and that also blocks direct scanout.
+-- use_cpu_buffer is not optional: NVIDIA needs the cursor in a CPU buffer, so
+-- clearing no_hardware_cursors without it falls straight back to software.
 hl.config({
     cursor = {
-        no_hardware_cursors = true,
+        no_hardware_cursors = false,
+        use_cpu_buffer      = true,
     },
 })
 
