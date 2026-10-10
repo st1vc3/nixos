@@ -13,22 +13,21 @@
 # the only path there is. That makes the pinned hash a tripwire rather than a
 # pin: when Overwolf ships a new build, the fetch fails with a hash mismatch
 # and the rebuild stops. That is the honest failure mode for an unversioned
-# source (the alternative is silently installing whatever is upstream today),
-# but it does mean this derivation needs a manual version + hash bump whenever
-# it breaks. To bump:
+# source (the alternative is silently installing whatever is upstream today).
 #
-#   nix-prefetch-url https://curseforge.overwolf.com/downloads/curseforge-latest-linux.AppImage
-#   nix hash convert --hash-algo sha256 --to sri <the base32 output>
+# `upgrade` refreshes the version and hash before building. To refresh manually:
 #
-# and read the new version out of the extracted curseforge.desktop
-# (X-AppImage-Version).
+#   nix run .#update-curseforge -- .
+#
+# The updater inspects the embedded desktop metadata without executing the
+# downloaded AppImage. Ordinary rebuilds keep using the recorded hash.
 let
   pname = "curseforge";
-  version = "1.321.1-39714";
+  version = "1.322.0-40357";
 
   src = fetchurl {
     url = "https://curseforge.overwolf.com/downloads/curseforge-latest-linux.AppImage";
-    hash = "sha256-4DQZNlrJGY1gGAyqB74+vhhI9lCDPAEQrayhSX5G0Uc=";
+    hash = "sha256-8EPXYdjSVg/UMywIeTxeyyZh8Smm9fiBiRHb9zbmamE=";
   };
 
   # Unpacked separately so the desktop entry and icons can be installed into

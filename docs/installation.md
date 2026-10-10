@@ -207,12 +207,16 @@ sudo nixos-rebuild switch --flake ~/nixos#nixos
 The interactive shell provides `upgrade` as a one-shot full update. It:
 
 1. Refreshes all pinned inputs (`nix flake update`).
-2. Auto-commits the refreshed `flake.lock`, so every upgrade is recorded in
-   Git history with the date.
-3. Builds the new generation with `nixos-rebuild boot` - it becomes the **boot
+2. Downloads CurseForge from its official URL and refreshes the pinned version
+   and hash in `pkgs/curseforge.nix`. The updater reads the AppImage's desktop
+   metadata without executing it. Other hash mismatches still fail the build.
+3. Builds the full system. Only after a successful build does it auto-commit
+   `flake.lock` and `pkgs/curseforge.nix`, recording the update with the date.
+   Failed builds leave the updates uncommitted for inspection or retry.
+4. Installs the new generation with `nixos-rebuild boot` - it becomes the **boot
    default** but is *not* activated on the running system, so a bad kernel or
    driver only takes effect once you deliberately reboot.
-4. Runs `nix-collect-garbage --delete-older-than 14d`, pruning old store paths
+5. Runs `nix-collect-garbage --delete-older-than 14d`, pruning old store paths
    while keeping the last two weeks of generations as rollback targets.
 
 ```bash

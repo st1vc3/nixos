@@ -56,19 +56,26 @@ rebuild_test() {
   rehash
 }
 
-# Full system upgrade: refresh pinned inputs, auto-commit the new lock so Git
-# history records each upgrade, build the new generation as the *boot default*
+# Full system upgrade: refresh pinned inputs and CurseForge, build successfully
+# before committing those updates, then install the new generation as the *boot default*
 # (activated on next reboot, so a bad kernel never touches the running system),
 # then prune generations older than 14 days while keeping recent rollback
 # targets. Reboot afterwards to run the new kernel.
 upgrade() {
   local flake="$HOME/nixos"
   ( cd "$flake" && nix flake update ) || return
-  git -C "$flake" add flake.lock
-  git -C "$flake" diff --cached --quiet flake.lock ||
-    git -C "$flake" commit -m "flake.lock: update inputs $(date +%F)" -- flake.lock || return
+  nix run "$flake#update-curseforge" -- "$flake" || return
+  nix build "$flake#nixosConfigurations.nixos.config.system.build.toplevel" --no-link || return
+  git -C "$flake" add -- flake.lock pkgs/curseforge.nix || return
+  git -C "$flake" diff --cached --quiet -- flake.lock pkgs/curseforge.nix
+  local diff_result=$?
+  if (( diff_result == 1 )); then
+    git -C "$flake" commit -m "upgrade: refresh inputs and CurseForge $(date +%F)" -- flake.lock pkgs/curseforge.nix || return
+  elif (( diff_result != 0 )); then
+    return "$diff_result"
+  fi
   sudo nixos-rebuild boot --flake "$flake#nixos" || return
-  sudo nix-collect-garbage --delete-older-than 14d
+  sudo nix-collect-garbage --delete-older-than 14d || return
   echo "Upgrade staged as boot default. Reboot to run the new kernel."
 }
 

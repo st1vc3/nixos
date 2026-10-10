@@ -85,5 +85,21 @@
       # Expose the Disko CLI from this flake's locked input. Installation docs
       # can use `nix run .#disko` without resolving an unrelated latest version.
       packages.x86_64-linux.disko = disko.packages.x86_64-linux.disko;
+
+      packages.x86_64-linux.update-curseforge =
+        let
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        in
+        pkgs.writeShellApplication {
+          name = "update-curseforge";
+          runtimeInputs = [
+            pkgs.nix
+            pkgs.python3
+            pkgs.squashfsTools
+          ];
+          text = ''
+            exec python3 ${./scripts/update_curseforge.py} "$@"
+          '';
+        };
     };
 }
