@@ -23,11 +23,11 @@
 # downloaded AppImage. Ordinary rebuilds keep using the recorded hash.
 let
   pname = "curseforge";
-  version = "1.322.0-40357";
+  version = "1.324.0-41180";
 
   src = fetchurl {
     url = "https://curseforge.overwolf.com/downloads/curseforge-latest-linux.AppImage";
-    hash = "sha256-8EPXYdjSVg/UMywIeTxeyyZh8Smm9fiBiRHb9zbmamE=";
+    hash = "sha256-co4Exw7Nm57m9m1oyFQ9hypnulZVFHfO6iopp3pWPD8=";
   };
 
   # Unpacked separately so the desktop entry and icons can be installed into
