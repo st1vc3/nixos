@@ -95,6 +95,9 @@ in
       enable = true;
       wayland = {
         enable = true;
+        # SilentSDDM selects KWin, but pickGpu uses Weston's --drm-device.
+        # Keep the compositor and its generated default command consistent.
+        compositor = lib.mkForce "weston";
         compositorCommand = lib.mkForce "${pickGpu}";
       };
     };

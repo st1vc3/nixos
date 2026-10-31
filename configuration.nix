@@ -20,6 +20,35 @@
       systemd-boot = {
         enable = true;
         configurationLimit = 10;
+
+        # Windows goes on nvme1n1 and brings its own ESP with it. systemd-boot
+        # only auto-detects Windows when both systems share one ESP, so that
+        # entry has to be declared by hand - see `windows` below.
+        #
+        # Separate ESPs are the deliberate choice over pointing Windows at
+        # nvme0n1p1: Windows feature updates rewrite their own ESP wholesale,
+        # and disko owns ours. Keeping them on different disks means neither
+        # installer can stand on the other's boot files.
+        #
+        # This shell is how the device handle below gets found, and it stays
+        # enabled afterwards as the way back in if a Windows update breaks its
+        # own entry.
+        edk2-uefi-shell.enable = true;
+
+        # TODO: uncomment once Windows is installed. The handle is a UEFI
+        # firmware enumeration, so it cannot be known until the ESP exists:
+        #   1. reboot and pick "EDK2 UEFI Shell" from this menu
+        #   2. `map -c` to list the consistent device handles
+        #   3. `ls HDxcy:\EFI` on each until one holds a `Microsoft` directory
+        #   4. confirm with `HDxcy:\EFI\Microsoft\Boot\Bootmgfw.efi`
+        #   5. put that handle here and `rebuild`
+        #
+        # windows."Windows 11" = {
+        #   efiDeviceHandle = "HD1b3";
+        #   # Generation entries sort under "nixos"; keep Windows below them
+        #   # rather than letting it take the default-selected top slot.
+        #   sortKey = "z_windows";
+        # };
       };
       efi.canTouchEfiVariables = true;
       # The initrd carries no HID drivers (see below), so its emergency shell has
